@@ -983,9 +983,14 @@ function triggerUrlAnalysis() {
     return;
   }
 
-  // Basic URL regex check
-  const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
-  if (!urlRegex.test(urlVal)) {
+  // Safe URL check avoiding ReDoS
+  try {
+    let checkUrl = urlVal;
+    if (!checkUrl.startsWith("http://") && !checkUrl.startsWith("https://")) {
+      checkUrl = "https://" + checkUrl;
+    }
+    new URL(checkUrl);
+  } catch (e) {
     showStatusMsg("analyzer-feedback", "Invalid URL format. Please include domain (e.g., https://example.com).", "error");
     return;
   }
