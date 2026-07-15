@@ -257,11 +257,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Initialize TON Connect UI SDK
+  // Initialize TON Connect UI SDK (Checking both namespaces to prevent load errors)
   let tonConnectUI = null;
   try {
-    if (window.TONConnectUI?.TonConnectUI) {
-      tonConnectUI = new window.TONConnectUI.TonConnectUI({
+    const TonConnectClass = window.TON_CONNECT_UI?.TonConnectUI || window.TONConnectUI?.TonConnectUI;
+    if (TonConnectClass) {
+      tonConnectUI = new TonConnectClass({
         manifestUrl: window.location.origin + '/tonconnect-manifest.json',
         buttonRootId: 'ton-connect-btn'
       });
@@ -296,22 +297,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Set initial view navigation
-  setupNavigation();
+  try { setupNavigation(); } catch (e) { console.error("Error in setupNavigation:", e); }
   
   // Initialize wallet display
-  updateWalletUI();
+  try { updateWalletUI(); } catch (e) { console.error("Error in updateWalletUI:", e); }
   
   // Render News Feed
-  renderArticles();
+  try { renderArticles(); } catch (e) { console.error("Error in renderArticles:", e); }
   
   // Render Claims Queue
-  renderClaims();
+  try { renderClaims(); } catch (e) { console.error("Error in renderClaims:", e); }
   
   // Render Transaction Ledger
-  renderLedger();
+  try { renderLedger(); } catch (e) { console.error("Error in renderLedger:", e); }
 
   // Attach core UI listeners
-  attachEventListeners();
+  try { attachEventListeners(); console.log("Event listeners attached"); } catch (e) { console.error("Error in attachEventListeners:", e); }
 });
 
 // Save current state helper
@@ -418,32 +419,43 @@ function updateWalletUI() {
       displayInitials = "WA";
     }
     
-    profileName.textContent = displayName;
-    profileInitials.textContent = displayInitials;
-    profileTier.textContent = "Tier 2: Fact-Checker";
-    profileTier.className = "user-tier-badge text-purple";
-    profileTier.style.borderColor = "rgba(157, 78, 221, 0.4)";
-    profileTier.style.background = "rgba(157, 78, 221, 0.12)";
+    if (profileName) profileName.textContent = displayName;
+    if (profileInitials) profileInitials.textContent = displayInitials;
+    if (profileTier) {
+      profileTier.textContent = "Tier 2: Fact-Checker";
+      profileTier.className = "user-tier-badge text-purple";
+      profileTier.style.borderColor = "rgba(157, 78, 221, 0.4)";
+      profileTier.style.background = "rgba(157, 78, 221, 0.12)";
+    }
   } else {
-    profileName.textContent = "Anonymous Pilot";
-    profileInitials.textContent = "AN";
-    profileTier.textContent = "Tier 1: Reader";
-    profileTier.className = "user-tier-badge";
-    profileTier.style.borderColor = "";
-    profileTier.style.background = "";
+    if (profileName) profileName.textContent = "Anonymous Pilot";
+    if (profileInitials) profileInitials.textContent = "AN";
+    if (profileTier) {
+      profileTier.textContent = "Tier 1: Reader";
+      profileTier.className = "user-tier-badge";
+      profileTier.style.borderColor = "";
+      profileTier.style.background = "";
+    }
   }
 
   // Update wallet hub views with real/live balance details
-  document.getElementById("bal-ton").textContent = state.balances.TON.toFixed(2);
-  document.getElementById("bal-ton-usd").textContent = (state.balances.TON * 7.20).toFixed(2); // Mock TON rate $7.20
-  document.getElementById("bal-usdt").textContent = state.balances.USDT.toFixed(2);
-  document.getElementById("bal-veri").textContent = state.balances.GRAM.toFixed(2);
-  document.getElementById("profile-rep").textContent = state.balances.GRAM.toFixed(2) + " GRAM";
+  const balTon = document.getElementById("bal-ton");
+  const balTonUsd = document.getElementById("bal-ton-usd");
+  const balUsdt = document.getElementById("bal-usdt");
+  const balVeri = document.getElementById("bal-veri");
+  const profileRep = document.getElementById("profile-rep");
+
+  if (balTon) balTon.textContent = state.balances.TON.toFixed(2);
+  if (balTonUsd) balTonUsd.textContent = (state.balances.TON * 7.20).toFixed(2); // Mock TON rate $7.20
+  if (balUsdt) balUsdt.textContent = state.balances.USDT.toFixed(2);
+  if (balVeri) balVeri.textContent = state.balances.GRAM.toFixed(2);
+  if (profileRep) profileRep.textContent = state.balances.GRAM.toFixed(2) + " GRAM";
 }
 
 // --- NEWS FEED ENGINE ---
 function renderArticles() {
   const feed = document.getElementById("articles-feed");
+  if (!feed) return;
   feed.innerHTML = '';
 
   // Get active filters
@@ -587,6 +599,7 @@ function openArticleDetail(id) {
 
 function populatePremiumContent(article) {
   const list = document.getElementById("detail-load-words");
+  if (!list) return;
   list.innerHTML = '';
   
   article.loadedWords.forEach(lw => {
@@ -628,9 +641,11 @@ function executeGramUnlock(articleId) {
 // --- FACT-CHECKING HUB ENGINE ---
 function renderClaims() {
   const list = document.getElementById("claims-list");
+  if (!list) return;
   list.innerHTML = '';
   
-  document.getElementById("dispute-count").textContent = `${state.claims.length} Claims Active`;
+  const disputeCount = document.getElementById("dispute-count");
+  if (disputeCount) disputeCount.textContent = `${state.claims.length} Claims Active`;
 
   state.claims.forEach(claim => {
     const card = document.createElement("div");
@@ -687,21 +702,27 @@ function openVoteDialog(id) {
   
   // Set default stake based on settings
   const stakeInput = document.getElementById("vote-stake");
-  if (state.stakeTier === '1') stakeInput.value = 10;
-  else if (state.stakeTier === '2') stakeInput.value = 50;
-  else if (state.stakeTier === '3') stakeInput.value = 200;
+  if (stakeInput) {
+    if (state.stakeTier === '1') stakeInput.value = 10;
+    else if (state.stakeTier === '2') stakeInput.value = 50;
+    else if (state.stakeTier === '3') stakeInput.value = 200;
+  }
   
   // Reset statuses
   const statusMsg = document.getElementById("vote-submit-status");
-  statusMsg.className = "status-msg mt-12 hidden";
-  statusMsg.innerHTML = '';
+  if (statusMsg) {
+    statusMsg.className = "status-msg mt-12 hidden";
+    statusMsg.innerHTML = '';
+  }
   
   // Reset radio buttons
   const radios = document.getElementsByName("verdict-choice");
   radios.forEach(r => r.checked = false);
   
-  document.getElementById("vote-evidence").value = '';
-  document.getElementById("vote-notes").value = '';
+  const voteEvidence = document.getElementById("vote-evidence");
+  const voteNotes = document.getElementById("vote-notes");
+  if (voteEvidence) voteEvidence.value = '';
+  if (voteNotes) voteNotes.value = '';
   
   // Show Voting drawer modal
   document.getElementById("modal-vote").classList.remove("hidden");
@@ -836,6 +857,7 @@ function submitNewClaim() {
 // --- TRANSACTION LEDGER & SWAP ENGINE ---
 function renderLedger() {
   const ledger = document.getElementById("tx-ledger-list");
+  if (!ledger) return;
   ledger.innerHTML = '';
   
   state.transactions.forEach(tx => {
@@ -881,8 +903,10 @@ function openTipDialog(articleId) {
   
   // Reset statuses
   const statusMsg = document.getElementById("tip-tx-status");
-  statusMsg.className = "status-msg mt-12 hidden";
-  statusMsg.innerHTML = '';
+  if (statusMsg) {
+    statusMsg.className = "status-msg mt-12 hidden";
+    statusMsg.innerHTML = '';
+  }
   
   // Show tip overlay
   document.getElementById("modal-tip").classList.remove("hidden");
@@ -894,7 +918,8 @@ function submitTip() {
     return;
   }
 
-  const asset = document.querySelector(".tip-chip.active").getAttribute("data-asset");
+  const activeChip = document.querySelector(".tip-chip.active");
+  const asset = activeChip ? activeChip.getAttribute("data-asset") : 'TON';
   const amount = parseFloat(document.getElementById("tip-amount").value);
   
   if (isNaN(amount) || amount <= 0) {
@@ -993,20 +1018,20 @@ function calculateSwapOutput() {
   const rateLabel = document.getElementById("exchange-rate-val");
   
   if (isNaN(fromAmt) || fromAmt <= 0) {
-    toInput.value = 0;
+    if (toInput) toInput.value = 0;
     return;
   }
   
   let multiplier = 0;
-  if (fromAsset === 'TON' && toAsset === 'GRAM') { multiplier = 20; rateLabel.textContent = "1 TON ≈ 20 GRAM"; }
-  else if (fromAsset === 'USDT' && toAsset === 'GRAM') { multiplier = 4; rateLabel.textContent = "1 USDT ≈ 4 GRAM"; }
-  else if (fromAsset === 'TON' && toAsset === 'USDT') { multiplier = 5; rateLabel.textContent = "1 TON ≈ 5 USDT"; }
-  else if (fromAsset === 'USDT' && toAsset === 'TON') { multiplier = 0.2; rateLabel.textContent = "5 USDT ≈ 1 TON"; }
-  else if (fromAsset === 'GRAM' && toAsset === 'TON') { multiplier = 0.05; rateLabel.textContent = "20 GRAM ≈ 1 TON"; }
-  else if (fromAsset === 'GRAM' && toAsset === 'USDT') { multiplier = 0.25; rateLabel.textContent = "4 GRAM ≈ 1 USDT"; }
-  else { multiplier = 1; rateLabel.textContent = "Rate is parity"; }
+  if (fromAsset === 'TON' && toAsset === 'GRAM') { multiplier = 20; if (rateLabel) rateLabel.textContent = "1 TON ≈ 20 GRAM"; }
+  else if (fromAsset === 'USDT' && toAsset === 'GRAM') { multiplier = 4; if (rateLabel) rateLabel.textContent = "1 USDT ≈ 4 GRAM"; }
+  else if (fromAsset === 'TON' && toAsset === 'USDT') { multiplier = 5; if (rateLabel) rateLabel.textContent = "1 TON ≈ 5 USDT"; }
+  else if (fromAsset === 'USDT' && toAsset === 'TON') { multiplier = 0.2; if (rateLabel) rateLabel.textContent = "5 USDT ≈ 1 TON"; }
+  else if (fromAsset === 'GRAM' && toAsset === 'TON') { multiplier = 0.05; if (rateLabel) rateLabel.textContent = "20 GRAM ≈ 1 TON"; }
+  else if (fromAsset === 'GRAM' && toAsset === 'USDT') { multiplier = 0.25; if (rateLabel) rateLabel.textContent = "4 GRAM ≈ 1 USDT"; }
+  else { multiplier = 1; if (rateLabel) rateLabel.textContent = "Rate is parity"; }
   
-  toInput.value = (fromAmt * multiplier).toFixed(2);
+  if (toInput) toInput.value = (fromAmt * multiplier).toFixed(2);
 }
 
 // Deposit / Withdraw helpers
@@ -1046,8 +1071,14 @@ window.withdrawCrypto = function(asset) {
 
 // --- URL ANALYSIS ACTION ---
 function triggerUrlAnalysis() {
+  console.log("triggerUrlAnalysis called");
   const urlInput = document.getElementById("analyze-url-input");
   const feedback = document.getElementById("analyzer-feedback");
+  
+  if (!urlInput) {
+    console.error("urlInput element not found");
+    return;
+  }
   const urlVal = urlInput.value.trim();
 
   if (!urlVal) {
@@ -1063,11 +1094,11 @@ function triggerUrlAnalysis() {
   }
 
   // Hide feedback if any
-  feedback.classList.add("hidden");
+  if (feedback) feedback.classList.add("hidden");
 
   // Show progress modal
   const progressModal = document.getElementById("modal-analysis-progress");
-  progressModal.classList.remove("hidden");
+  if (progressModal) progressModal.classList.remove("hidden");
 
   // Reset steps UI
   const steps = [
@@ -1078,11 +1109,11 @@ function triggerUrlAnalysis() {
   ];
   
   steps.forEach(s => {
-    s.className = "step-item text-muted";
+    if (s) s.className = "step-item text-muted";
   });
 
   const leadText = document.getElementById("analysis-lead-text");
-  leadText.textContent = "Initializing AI Analysis...";
+  if (leadText) leadText.textContent = "Initializing AI Analysis...";
 
   let fetchResult = null;
   let animationDone = false;
@@ -1118,31 +1149,31 @@ function triggerUrlAnalysis() {
 
   // 2. Play beautiful neon progress ticker (minimum duration 3.2s)
   setTimeout(() => {
-    steps[0].className = "step-item active";
-    leadText.textContent = "Connecting to source node...";
+    if (steps[0]) steps[0].className = "step-item active";
+    if (leadText) leadText.textContent = "Connecting to source node...";
   }, 100);
 
   setTimeout(() => {
-    steps[0].className = "step-item done";
-    steps[1].className = "step-item active";
-    leadText.textContent = "Parsing linguistic metrics...";
+    if (steps[0]) steps[0].className = "step-item done";
+    if (steps[1]) steps[1].className = "step-item active";
+    if (leadText) leadText.textContent = "Parsing linguistic metrics...";
   }, 900);
 
   setTimeout(() => {
-    steps[1].className = "step-item done";
-    steps[2].className = "step-item active";
-    leadText.textContent = "Calculating bias coefficient...";
+    if (steps[1]) steps[1].className = "step-item done";
+    if (steps[2]) steps[2].className = "step-item active";
+    if (leadText) leadText.textContent = "Calculating bias coefficient...";
   }, 1700);
 
   setTimeout(() => {
-    steps[2].className = "step-item done";
-    steps[3].className = "step-item active";
-    leadText.textContent = "Auditing verification history...";
+    if (steps[2]) steps[2].className = "step-item done";
+    if (steps[3]) steps[3].className = "step-item active";
+    if (leadText) leadText.textContent = "Auditing verification history...";
   }, 2500);
 
   setTimeout(() => {
-    steps[3].className = "step-item done";
-    leadText.textContent = "Compiling report...";
+    if (steps[3]) steps[3].className = "step-item done";
+    if (leadText) leadText.textContent = "Compiling report...";
     animationDone = true;
     checkCompletion();
   }, 3300);
@@ -1152,12 +1183,12 @@ function triggerUrlAnalysis() {
     if (apiDone && animationDone) {
       finalizeReport(fetchResult);
     } else if (animationDone && !apiDone) {
-      leadText.textContent = "Waiting for model endpoint response...";
+      if (leadText) leadText.textContent = "Waiting for model endpoint response...";
     }
   }
 
   function finalizeReport(data) {
-    progressModal.classList.add("hidden");
+    if (progressModal) progressModal.classList.add("hidden");
     
     const domainName = new URL(cleanUrl).hostname.replace("www.", "");
     
@@ -1268,14 +1299,22 @@ function generateMockAnalysis(cleanUrl) {
 
 // --- EVENT CONTROLLERS ---
 function attachEventListeners() {
+  const safeAddListener = (id, event, callback) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener(event, callback);
+  };
+
   // URL Analyzer Trigger
-  document.getElementById("analyze-url-btn").addEventListener("click", triggerUrlAnalysis);
+  safeAddListener("analyze-url-btn", "click", triggerUrlAnalysis);
 
   // Search bar
-  document.getElementById("news-search").addEventListener("input", (e) => {
-    state.searchQuery = e.target.value;
-    renderArticles();
-  });
+  const searchInput = document.getElementById("news-search");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      state.searchQuery = e.target.value;
+      renderArticles();
+    });
+  }
   
   // Category Chips
   const chips = document.querySelectorAll("#category-chips .chip");
@@ -1289,49 +1328,49 @@ function attachEventListeners() {
   });
   
   // Filter Dropdowns
-  document.getElementById("filter-bias").addEventListener("change", (e) => {
+  safeAddListener("filter-bias", "change", (e) => {
     state.filterBias = e.target.value;
     renderArticles();
   });
   
-  document.getElementById("filter-status").addEventListener("change", (e) => {
+  safeAddListener("filter-status", "change", (e) => {
     state.filterStatus = e.target.value;
     renderArticles();
   });
 
   // Modal Closures
-  document.getElementById("close-detail-btn").addEventListener("click", () => {
+  safeAddListener("close-detail-btn", "click", () => {
     document.getElementById("modal-article-detail").classList.add("hidden");
   });
-  document.getElementById("detail-close-bottom-btn").addEventListener("click", () => {
+  safeAddListener("detail-close-bottom-btn", "click", () => {
     document.getElementById("modal-article-detail").classList.add("hidden");
   });
-  document.getElementById("close-tip-btn").addEventListener("click", () => {
+  safeAddListener("close-tip-btn", "click", () => {
     document.getElementById("modal-tip").classList.add("hidden");
   });
-  document.getElementById("close-submit-claim-btn").addEventListener("click", () => {
+  safeAddListener("close-submit-claim-btn", "click", () => {
     document.getElementById("modal-submit-claim").classList.add("hidden");
   });
-  document.getElementById("cancel-submit-claim-btn").addEventListener("click", () => {
+  safeAddListener("cancel-submit-claim-btn", "click", () => {
     document.getElementById("modal-submit-claim").classList.add("hidden");
   });
-  document.getElementById("close-vote-btn").addEventListener("click", () => {
+  safeAddListener("close-vote-btn", "click", () => {
     document.getElementById("modal-vote").classList.add("hidden");
   });
-  document.getElementById("cancel-vote-btn").addEventListener("click", () => {
+  safeAddListener("cancel-vote-btn", "click", () => {
     document.getElementById("modal-vote").classList.add("hidden");
   });
-  document.getElementById("close-swap-btn-x").addEventListener("click", () => {
+  safeAddListener("close-swap-btn-x", "click", () => {
     document.getElementById("modal-swap").classList.add("hidden");
   });
 
   // Unlock Premium Actions
-  document.getElementById("unlock-premium-gram-btn").addEventListener("click", () => {
+  safeAddListener("unlock-premium-gram-btn", "click", () => {
     if (state.currentArticle) executeGramUnlock(state.currentArticle.id);
   });
 
   // Tipping Submissions
-  document.getElementById("detail-tip-btn").addEventListener("click", () => {
+  safeAddListener("detail-tip-btn", "click", () => {
     if (state.currentArticle) {
       document.getElementById("modal-article-detail").classList.add("hidden");
       openTipDialog(state.currentArticle.id);
@@ -1344,74 +1383,92 @@ function attachEventListeners() {
       tipChips.forEach(c => c.classList.remove("active"));
       chip.classList.add("active");
       const asset = chip.getAttribute("data-asset");
-      document.getElementById("tip-denom").textContent = asset;
-      document.getElementById("tip-amount").value = asset === 'TON' ? 0.2 : 1.0;
+      const tipDenom = document.getElementById("tip-denom");
+      const tipAmount = document.getElementById("tip-amount");
+      if (tipDenom) tipDenom.textContent = asset;
+      if (tipAmount) tipAmount.value = asset === 'TON' ? 0.2 : 1.0;
     });
   });
   
-  document.getElementById("confirm-tip-btn").addEventListener("click", submitTip);
+  safeAddListener("confirm-tip-btn", "click", submitTip);
 
   // Submit Claim Open
-  document.getElementById("open-submit-claim-btn").addEventListener("click", () => {
+  safeAddListener("open-submit-claim-btn", "click", () => {
     const statusMsg = document.getElementById("submit-claim-status");
-    statusMsg.className = "status-msg mt-12 hidden";
-    statusMsg.innerHTML = '';
+    if (statusMsg) {
+      statusMsg.className = "status-msg mt-12 hidden";
+      statusMsg.innerHTML = '';
+    }
     
-    document.getElementById("claim-url").value = '';
-    document.getElementById("claim-title").value = '';
-    document.getElementById("claim-text").value = '';
+    const claimUrl = document.getElementById("claim-url");
+    const claimTitle = document.getElementById("claim-title");
+    const claimText = document.getElementById("claim-text");
+    if (claimUrl) claimUrl.value = '';
+    if (claimTitle) claimTitle.value = '';
+    if (claimText) claimText.value = '';
     
     document.getElementById("modal-submit-claim").classList.remove("hidden");
   });
   
-  document.getElementById("confirm-submit-claim-btn").addEventListener("click", submitNewClaim);
+  safeAddListener("confirm-submit-claim-btn", "click", submitNewClaim);
   
   // Dispute Voting Confirm
-  document.getElementById("confirm-vote-btn").addEventListener("click", submitVoteVerdict);
+  safeAddListener("confirm-vote-btn", "click", submitVoteVerdict);
 
   // Swap opens
-  document.getElementById("open-swap-btn").addEventListener("click", () => {
+  safeAddListener("open-swap-btn", "click", () => {
     const statusMsg = document.getElementById("swap-tx-status");
-    statusMsg.className = "status-msg mt-12 hidden";
-    statusMsg.innerHTML = '';
+    if (statusMsg) {
+      statusMsg.className = "status-msg mt-12 hidden";
+      statusMsg.innerHTML = '';
+    }
     
-    document.getElementById("swap-from-amount").value = 5.0;
+    const swapFrom = document.getElementById("swap-from-amount");
+    if (swapFrom) swapFrom.value = 5.0;
     calculateSwapOutput();
     document.getElementById("modal-swap").classList.remove("hidden");
   });
   
   // Swap formulas
-  document.getElementById("swap-from-amount").addEventListener("input", calculateSwapOutput);
-  document.getElementById("swap-from-asset").addEventListener("change", calculateSwapOutput);
-  document.getElementById("swap-to-asset").addEventListener("change", calculateSwapOutput);
-  document.getElementById("confirm-swap-btn").addEventListener("click", handleTokenSwap);
+  const swapFrom = document.getElementById("swap-from-amount");
+  const swapFromAsset = document.getElementById("swap-from-asset");
+  const swapToAsset = document.getElementById("swap-to-asset");
+  if (swapFrom) swapFrom.addEventListener("input", calculateSwapOutput);
+  if (swapFromAsset) swapFromAsset.addEventListener("change", calculateSwapOutput);
+  if (swapToAsset) swapToAsset.addEventListener("change", calculateSwapOutput);
+  
+  safeAddListener("confirm-swap-btn", "click", handleTokenSwap);
 
   // Rules / Guides
-  document.getElementById("view-rules-btn").addEventListener("click", () => {
-    alert("Verification Consensus Rules:\n1. Provide official government transcripts or verified independent journalism feeds.\n2. Staking locks tokens for a 48h resolution window.\n3. Dishonest verdicts that stray from majority consensus are slashed and redistributed to voters.\n4. GRAM is staked to earn consensus yields.");
+  safeAddListener("view-rules-btn", "click", () => {
+    alert("Consensus Audit Rules:\n1. Provide official reference URLs or files.\n2. Staking locks tokens for a 48h resolution window.\n3. Dishonest verdicts are slashed and split among the consensus majority.\n4. GRAM is staked to yield verification fees.");
   });
   
   // Claim rewards
-  document.getElementById("claim-rewards-btn").addEventListener("click", () => {
+  safeAddListener("claim-rewards-btn", "click", () => {
     alert("No unclaimed validator rewards currently available. Participate in active consensus disputes to earn yield.");
   });
 
   // Settings Events
   const autoUnlockToggle = document.getElementById("setting-auto-unlock");
-  autoUnlockToggle.checked = state.autoUnlock;
-  autoUnlockToggle.addEventListener("change", (e) => {
-    state.autoUnlock = e.target.checked;
-    saveAppState();
-  });
+  if (autoUnlockToggle) {
+    autoUnlockToggle.checked = state.autoUnlock;
+    autoUnlockToggle.addEventListener("change", (e) => {
+      state.autoUnlock = e.target.checked;
+      saveAppState();
+    });
+  }
 
   const stakeTierSelect = document.getElementById("setting-stake-tier");
-  stakeTierSelect.value = state.stakeTier;
-  stakeTierSelect.addEventListener("change", (e) => {
-    state.stakeTier = e.target.value;
-    saveAppState();
-  });
+  if (stakeTierSelect) {
+    stakeTierSelect.value = state.stakeTier;
+    stakeTierSelect.addEventListener("change", (e) => {
+      state.stakeTier = e.target.value;
+      saveAppState();
+    });
+  }
 
-  document.getElementById("reset-data-btn").addEventListener("click", () => {
+  safeAddListener("reset-data-btn", "click", () => {
     if (confirm("Are you sure you want to clear all local data, wallets, and resets?")) {
       localStorage.removeItem("verichain_news_state");
       location.reload();
@@ -1421,13 +1478,16 @@ function attachEventListeners() {
 
 // Preset tip helper
 window.setTipPreset = function(val) {
-  document.getElementById("tip-amount").value = val;
+  const tipAmount = document.getElementById("tip-amount");
+  if (tipAmount) tipAmount.value = val;
 };
 
 // Helper for status message alerts
 function showStatusMsg(elementId, text, type) {
   const el = document.getElementById(elementId);
-  el.textContent = text;
-  el.className = `status-msg mt-12 status-${type}`;
-  el.classList.remove("hidden");
+  if (el) {
+    el.textContent = text;
+    el.className = `status-msg mt-12 status-${type}`;
+    el.classList.remove("hidden");
+  }
 }
