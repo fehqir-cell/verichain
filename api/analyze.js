@@ -57,3 +57,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
+
+
+
+TELEGRAM_BOT_TOKEN=8806943275:AAF4p3VkXaXRwgBP3XEWtNMySncdvIZ5kak
