@@ -9,10 +9,12 @@ export default async function handler(req, res) {
       const text = "Welcome to VeriChain News! 🌐\n\nClick the button below to launch the decentralized fact-checking Mini App.";
       
       // Get the URL of our deployed Vercel app. 
-      // VERCEL_URL is automatically populated by Vercel.
-      const webAppUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL 
+      let webAppUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL 
         ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` 
         : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://your-project.vercel.app');
+        
+      // Add a cache-buster parameter to ensure Telegram ALWAYS loads the newest version
+      webAppUrl += `?v=${Date.now()}`;
       
       const token = process.env.TELEGRAM_BOT_TOKEN;
       const apiUrl = `https://api.telegram.org/bot${token}/sendMessage`;
