@@ -1,5 +1,5 @@
 // VeriChain News - Application Logic & State Controller
-
+const CORPORATE_WALLET_ADDRESS = "UQCKWWJEzLY4JSULMtL8r8H4O4dkx9OXNd8wxEcu6lP81E4I";
 // --- STATE MANAGEMENT ---
 let state = {
   walletConnected: false,
@@ -264,6 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
         manifestUrl: window.location.origin + '/tonconnect-manifest.json',
         buttonRootId: 'ton-connect-btn'
       });
+      window.appTonConnectUI = tonConnectUI; // Expose globally for payments
       
       // Subscribe to TON Connect state changes
       tonConnectUI.onStatusChange(async (wallet) => {
@@ -573,8 +574,8 @@ function openArticleDetail(id) {
     contentDetails.classList.add("blur-content");
     
     // Set auto-unlock check if auto-unlock settings is active
-    if (state.autoUnlock && state.balances.GRAM >= 5.0) {
-      executeGramUnlock(article.id);
+    if (state.autoUnlock) {
+      executeTonUnlock(article.id);
     }
   } else {
     // Hide paywall gate and show crystal-clear details
@@ -618,26 +619,50 @@ function populatePremiumContent(article) {
   });
 }
 
-function executeGramUnlock(articleId) {
+async function executeTonUnlock(articleId) {
   const article = state.articles.find(a => a.id === articleId);
   if (!article) return;
 
-  if (state.balances.GRAM < 5.0) {
-    alert("Insufficient GRAM tokens. You can swap TON or USDT to GRAM in the Wallet tab.");
+  if (!window.appTonConnectUI || !window.appTonConnectUI.connected) {
+    alert("Please connect your TON wallet first to pay for the report unlock.");
     return;
   }
   
-  // Deduct fee
-  state.balances.GRAM -= 5.0;
-  state.unlockedArticles.push(articleId);
-  
-  // Log transaction
-  const cleanTitle = article.title.length > 20 ? article.title.substring(0, 20) + '...' : article.title;
-  addTransaction('Unlock', `Unlocked report: ${cleanTitle}`, `-5.00 GRAM`, 'ton...gram');
-  
-  // Save and update
-  updateWalletUI();
-  saveAppState();
+  try {
+    const unlockAmountTon = 0.1; // 0.1 TON fee
+    const nanotons = (unlockAmountTon * 1000000000).toString();
+    
+    const transaction = {
+      validUntil: Math.floor(Date.now() / 1000) + 300, // 5 minutes validity
+      messages: [
+        {
+          address: CORPORATE_WALLET_ADDRESS,
+          amount: nanotons,
+          payload: '' // Optionally add a memo here
+        }
+      ]
+    };
+
+    // Request signature from the user's wallet
+    await window.appTonConnectUI.sendTransaction(transaction);
+    
+    // If we reach here, transaction was approved and sent
+    state.unlockedArticles.push(articleId);
+    
+    const cleanTitle = article.title.length > 20 ? article.title.substring(0, 20) + '...' : article.title;
+    addTransaction('Unlock', `Unlocked report: ${cleanTitle}`, `-0.10 TON`, 'ton...pay');
+    
+    updateWalletUI();
+    saveAppState();
+    
+    // Refresh view
+    openArticleDetail(articleId);
+    
+  } catch (error) {
+    console.error("Payment failed or was canceled:", error);
+    alert("Payment was canceled or failed. The report remains locked.");
+  }
+}
   
   // Redraw modal
   openArticleDetail(articleId);
@@ -1373,8 +1398,8 @@ function attachEventListeners() {
   });
 
   // Unlock Premium Actions
-  safeAddListener("unlock-premium-gram-btn", "click", () => {
-    if (state.currentArticle) executeGramUnlock(state.currentArticle.id);
+  safeAddListener("unlock-premium-ton-btn", "click", () => {
+    if (state.currentArticle) executeTonUnlock(state.currentArticle.id);
   });
 
   // Tipping Submissions
