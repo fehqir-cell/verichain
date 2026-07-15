@@ -913,14 +913,13 @@ function openTipDialog(articleId) {
   document.getElementById("modal-tip").classList.remove("hidden");
 }
 
-function submitTip() {
-  if (!state.walletConnected) {
+async function submitTip() {
+  if (!window.appTonConnectUI || !window.appTonConnectUI.connected) {
     showStatusMsg("tip-tx-status", "Wallet must be connected to send tips.", "error");
     return;
   }
 
-  const activeChip = document.querySelector(".tip-chip.active");
-  const asset = activeChip ? activeChip.getAttribute("data-asset") : 'TON';
+  const asset = 'TON';
   const amount = parseFloat(document.getElementById("tip-amount").value);
   
   if (isNaN(amount) || amount <= 0) {
@@ -928,25 +927,41 @@ function submitTip() {
     return;
   }
   
-  if (state.balances[asset] < amount) {
-    showStatusMsg("tip-tx-status", `Insufficient ${asset} balance to complete payment.`, "error");
-    return;
-  }
+  showStatusMsg("tip-tx-status", "Please confirm the transaction in your wallet...", "success");
 
-  // Deduct tip
-  state.balances[asset] -= amount;
-  
-  const cleanTitle = state.currentArticle.title.length > 25 ? state.currentArticle.title.substring(0, 25) + '...' : state.currentArticle.title;
-  addTransaction('Tip', `Tipped content: ${cleanTitle}`, `-${amount.toFixed(2)} ${asset}`, 'ton...f088');
-  
-  showStatusMsg("tip-tx-status", `Tip of ${amount} ${asset} sent to authors & validators!`, "success");
-  
-  updateWalletUI();
-  saveAppState();
-  
-  setTimeout(() => {
-    document.getElementById("modal-tip").classList.add("hidden");
-  }, 1500);
+  try {
+    const nanotons = (amount * 1000000000).toString();
+    
+    const transaction = {
+      validUntil: Math.floor(Date.now() / 1000) + 300, // 5 minutes validity
+      messages: [
+        {
+          address: CORPORATE_WALLET_ADDRESS,
+          amount: nanotons,
+          payload: '' // Optionally add a memo here
+        }
+      ]
+    };
+
+    // Request signature from the user's wallet
+    await window.appTonConnectUI.sendTransaction(transaction);
+
+    const cleanTitle = state.currentArticle.title.length > 25 ? state.currentArticle.title.substring(0, 25) + '...' : state.currentArticle.title;
+    addTransaction('Tip', `Tipped content: ${cleanTitle}`, `-${amount.toFixed(2)} ${asset}`, 'ton...pay');
+    
+    showStatusMsg("tip-tx-status", `Tip of ${amount} ${asset} sent successfully to the corporate wallet!`, "success");
+    
+    updateWalletUI();
+    saveAppState();
+    
+    setTimeout(() => {
+      document.getElementById("modal-tip").classList.add("hidden");
+    }, 1500);
+
+  } catch (error) {
+    console.error("Tip payment failed or was canceled:", error);
+    showStatusMsg("tip-tx-status", "Payment was canceled or failed.", "error");
+  }
 }
 
 function handleTokenSwap() {
