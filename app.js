@@ -245,8 +245,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize Telegram WebApp SDK if running inside Telegram
   const tg = window.Telegram?.WebApp;
   if (tg) {
-    tg.ready();
-    tg.expand(); // Full viewport height
     
     const tgUser = tg.initDataUnsafe?.user;
     if (tgUser && !state.walletConnected) {
@@ -313,6 +311,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Attach core UI listeners
   try { attachEventListeners(); console.log("Event listeners attached"); } catch (e) { console.error("Error in attachEventListeners:", e); }
+
+  // Signal to Telegram that the Web App is fully loaded and ready to be displayed
+  if (window.Telegram?.WebApp) {
+    try {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+    } catch (e) {
+      console.error("Error calling Telegram WebApp ready/expand:", e);
+    }
+  }
 });
 
 // Save current state helper
