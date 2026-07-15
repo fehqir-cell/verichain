@@ -242,6 +242,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Initialize Telegram WebApp SDK if running inside Telegram
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.ready();
+    tg.expand(); // Full viewport height
+    
+    const tgUser = tg.initDataUnsafe?.user;
+    if (tgUser) {
+      // Auto-connect wallet based on Telegram user ID if not already connected
+      if (!state.walletConnected) {
+        state.walletConnected = true;
+        state.walletAddress = "UQ" + tgUser.id.toString(16).padEnd(42, 'x'); // Generate mock TON address from user ID
+        addTransaction('Connect', `Auto-connected via Telegram context`, '0.00 TON', 'tg...' + tgUser.id.toString().substring(0,4));
+      }
+    }
+  }
+
   // Set initial view navigation
   setupNavigation();
   
@@ -322,8 +339,19 @@ function updateWalletUI() {
     // Shorten address format (e.g. UQA1...8x2a)
     addrText.textContent = state.walletAddress.substring(0, 4) + "..." + state.walletAddress.substring(state.walletAddress.length - 4);
     
-    profileName.textContent = "Validator Pilot #" + state.walletAddress.substring(state.walletAddress.length - 4);
-    profileInitials.textContent = "VP";
+    // Check if we can extract Telegram user information
+    let displayName = "Validator Pilot #" + state.walletAddress.substring(state.walletAddress.length - 4);
+    let displayInitials = "VP";
+    
+    const tg = window.Telegram?.WebApp;
+    if (tg && tg.initDataUnsafe?.user) {
+      const tgUser = tg.initDataUnsafe.user;
+      displayName = tgUser.username ? `@${tgUser.username}` : `${tgUser.first_name} ${tgUser.last_name || ''}`;
+      displayInitials = tgUser.first_name.substring(0, 2).toUpperCase();
+    }
+    
+    profileName.textContent = displayName;
+    profileInitials.textContent = displayInitials;
     profileTier.textContent = "Tier 2: Fact-Checker";
     profileTier.className = "user-tier-badge text-purple";
     profileTier.style.borderColor = "rgba(157, 78, 221, 0.4)";
