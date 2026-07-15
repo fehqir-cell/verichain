@@ -1091,20 +1091,21 @@ function triggerUrlAnalysis() {
     
     // Create new article entry
     const newId = state.articles.length + 1;
+    const safeBiasClass = data.biasClass || "center";
     const newArticle = {
       id: newId,
       title: data.title || `Scan: ${domainName} Report`,
       category: data.category || "geopolitics",
       source: domainName,
       time: "Just now",
-      teaser: data.teaser || `AI scan completed. The content exhibits a ${data.biasClass}-leaning style.`,
-      biasText: data.biasText || `${data.biasClass.toUpperCase()} (${data.biasScore}%)`,
+      teaser: data.teaser || `AI scan completed. The content exhibits a ${safeBiasClass}-leaning style.`,
+      biasText: data.biasText || `${safeBiasClass.toUpperCase()} (${data.biasScore || 50}%)`,
       biasScore: data.biasScore || 50,
-      biasClass: data.biasClass || "center",
+      biasClass: safeBiasClass,
       framing: data.framing || "Standard Reporting",
       trustScore: data.trustScore || 80,
-      status: data.status || (data.trustScore > 80 ? "verified" : data.trustScore > 50 ? "disputed" : "false"),
-      statusText: data.statusText || (data.trustScore > 80 ? "Verified True" : "Under Review"),
+      status: data.status || ((data.trustScore || 80) > 80 ? "verified" : (data.trustScore || 80) > 50 ? "disputed" : "false"),
+      statusText: data.statusText || ((data.trustScore || 80) > 80 ? "Verified True" : "Under Review"),
       auditSummary: data.auditSummary || "Standard automated evaluation complete.",
       evidence: data.evidence || [`Cryptographic check of domain: ${domainName}`],
       loadedWords: data.loadedWords || [],
