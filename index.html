@@ -192,42 +192,6 @@
               <button class="btn btn-card-action btn-card-secondary" onclick="withdrawCrypto('TON')">Withdraw</button>
             </div>
           </div>
-
-          <!-- Balance Card 2: USDT -->
-          <div class="balance-card grad-usdt">
-            <div class="bal-header">
-              <span class="bal-label">USDT (TON)</span>
-              <svg class="bal-icon text-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 6v12M9 9h6M9 12h6"/>
-              </svg>
-            </div>
-            <div class="bal-val"><span id="bal-usdt">0.00</span> <span class="bal-denom">USDT</span></div>
-            <div class="bal-usd">≈ $0.00 USD</div>
-            <div class="bal-footer">
-              <button class="btn btn-card-action" onclick="depositCrypto('USDT')">Deposit</button>
-              <button class="btn btn-card-action btn-card-secondary" onclick="withdrawCrypto('USDT')">Withdraw</button>
-            </div>
-          </div>
-
-          <!-- Balance Card 3: GRAM (Utility/Payment) -->
-          <div class="balance-card grad-veri">
-            <div class="bal-header">
-              <span class="bal-label">GRAM Balance (Utility)</span>
-              <svg class="bal-icon text-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/>
-                <path d="M12 22V12"/>
-                <path d="M12 12 22 8.5"/>
-                <path d="M12 12 2 8.5"/>
-              </svg>
-            </div>
-            <div class="bal-val"><span id="bal-veri">100.00</span> <span class="bal-denom">GRAM</span></div>
-            <div class="bal-usd" id="bal-veri-staked">Staked for consensus: 20.00 GRAM</div>
-            <div class="bal-footer">
-              <button class="btn btn-card-action btn-purple" id="open-swap-btn">Swap Tokens</button>
-              <button class="btn btn-card-action btn-card-secondary" id="claim-rewards-btn">Claim Rewards</button>
-            </div>
-          </div>
         </div>
 
         <!-- Transaction History -->

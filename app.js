@@ -5,16 +5,10 @@ let state = {
   walletConnected: false,
   walletAddress: '',
   balances: {
-    TON: 0.00,
-    USDT: 0.00,
-    GRAM: 100.00
+    TON: 0.00
   },
   unlockedArticles: [3], // Article IDs that have been unlocked. Article 3 is free/unlocked by default.
-  transactions: [
-    { id: 'tx_001', type: 'Reward', title: 'Fact-Check Consensus Payout', amount: '15.00 GRAM', time: '1 day ago', hash: 'ton...4d9a' },
-    { id: 'tx_002', type: 'Stake', title: 'Staked for Claim #10842', amount: '-10.00 GRAM', time: '2 days ago', hash: 'ton...b20f' },
-    { id: 'tx_003', type: 'Tip', title: 'Tip to AP News team', amount: '-0.50 TON', time: '3 days ago', hash: 'ton...31a2' }
-  ],
+  transactions: [],
   activeView: 'feed',
   currentArticle: null,
   currentClaim: null,
@@ -231,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const parsed = JSON.parse(savedState);
       state.walletConnected = parsed.walletConnected || false;
       state.walletAddress = parsed.walletAddress || '';
-      state.balances = parsed.balances || state.balances;
+      state.balances = { TON: 0.00 };
       state.unlockedArticles = parsed.unlockedArticles || state.unlockedArticles;
       state.transactions = parsed.transactions || state.transactions;
       state.claims = parsed.claims || state.claims;
@@ -284,7 +278,6 @@ document.addEventListener("DOMContentLoaded", () => {
             state.walletConnected = false;
             state.walletAddress = '';
             state.balances.TON = 0.00;
-            state.balances.USDT = 0.00;
           }
           updateWalletUI();
           saveAppState();
@@ -351,21 +344,6 @@ async function fetchRealOnChainBalances(rawAddress, chainId) {
       const accountData = await accountRes.json();
       // balance is returned in nanotons (1 TON = 10^9 nanotons)
       state.balances.TON = accountData.balance / 1e9;
-    }
-    
-    // 2. Fetch Jettons (for USDT)
-    const jettonsRes = await fetch(`${baseApi}/v2/accounts/${rawAddress}/jettons`);
-    if (jettonsRes.ok) {
-      const jettonsData = await jettonsRes.json();
-      // Search for USDT contract balance
-      const usdtJetton = jettonsData.balances?.find(b => b.jetton.symbol === 'USDT');
-      if (usdtJetton) {
-        // USDT usually has 6 decimals on TON
-        const decimals = usdtJetton.jetton.decimals || 6;
-        state.balances.USDT = Number(usdtJetton.balance) / Math.pow(10, decimals);
-      } else {
-        state.balances.USDT = 0.00;
-      }
     }
     
     updateWalletUI();
@@ -450,15 +428,11 @@ function updateWalletUI() {
   // Update wallet hub views with real/live balance details
   const balTon = document.getElementById("bal-ton");
   const balTonUsd = document.getElementById("bal-ton-usd");
-  const balUsdt = document.getElementById("bal-usdt");
-  const balVeri = document.getElementById("bal-veri");
   const profileRep = document.getElementById("profile-rep");
 
   if (balTon) balTon.textContent = state.balances.TON.toFixed(2);
   if (balTonUsd) balTonUsd.textContent = (state.balances.TON * 7.20).toFixed(2); // Mock TON rate $7.20
-  if (balUsdt) balUsdt.textContent = state.balances.USDT.toFixed(2);
-  if (balVeri) balVeri.textContent = state.balances.GRAM.toFixed(2);
-  if (profileRep) profileRep.textContent = state.balances.GRAM.toFixed(2) + " GRAM";
+  if (profileRep) profileRep.textContent = state.balances.TON.toFixed(2) + " TON";
 }
 
 // --- NEWS FEED ENGINE ---
