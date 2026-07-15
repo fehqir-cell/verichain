@@ -657,18 +657,12 @@ async function executeTonUnlock(articleId) {
     
     // Refresh view
     openArticleDetail(articleId);
+    renderArticles(); // Re-render feed list to remove lock icon
     
   } catch (error) {
     console.error("Payment failed or was canceled:", error);
     alert("Payment was canceled or failed. The report remains locked.");
   }
-}
-  
-  // Redraw modal
-  openArticleDetail(articleId);
-  
-  // Re-render feed list to remove lock icon
-  renderArticles();
 }
 
 // --- FACT-CHECKING HUB ENGINE ---
