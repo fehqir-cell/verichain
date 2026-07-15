@@ -187,10 +187,6 @@
             </div>
             <div class="bal-val"><span id="bal-ton">0.00</span> <span class="bal-denom">TON</span></div>
             <div class="bal-usd">≈ $<span id="bal-ton-usd">0.00</span> USD</div>
-            <div class="bal-footer">
-              <button class="btn btn-card-action" onclick="depositCrypto('TON')">Deposit</button>
-              <button class="btn btn-card-action btn-card-secondary" onclick="withdrawCrypto('TON')">Withdraw</button>
-            </div>
           </div>
         </div>
 
@@ -535,57 +531,6 @@
       </div>
     </div>
 
-    <!-- MODAL 5: SWAP TOKENS -->
-    <div id="modal-swap" class="modal-overlay hidden">
-      <div class="modal-container max-w-sm">
-        <div class="modal-header">
-          <h3>Token Exchange (DeFi Swap)</h3>
-          <button class="modal-close" id="close-swap-btn-x">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="swap-input-container">
-            <label>From:</label>
-            <div class="swap-row">
-              <input type="number" id="swap-from-amount" value="5.0" step="1">
-              <select id="swap-from-asset">
-                <option value="TON">TON</option>
-                <option value="USDT">USDT</option>
-                <option value="GRAM">GRAM</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="swap-divider">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <polyline points="19 12 12 19 5 12"/>
-            </svg>
-          </div>
-
-          <div class="swap-input-container">
-            <label>To (Estimated):</label>
-            <div class="swap-row">
-              <input type="number" id="swap-to-amount" value="100" readonly>
-              <select id="swap-to-asset">
-                <option value="GRAM" selected>GRAM</option>
-                <option value="TON">TON</option>
-                <option value="USDT">USDT</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="exchange-rate-row mt-12">
-            <span>Exchange Rate:</span>
-            <strong id="exchange-rate-val">1 TON ≈ 20 GRAM</strong>
-          </div>
-          
-          <div id="swap-tx-status" class="status-msg mt-12 hidden"></div>
-        </div>
-        <div class="modal-footer">
-          <button id="confirm-swap-btn" class="btn btn-primary w-full">Execute Swap</button>
-        </div>
-      </div>
-    </div>
 
     <!-- MODAL 6: AI ANALYSIS PROGRESS -->
     <div id="modal-analysis-progress" class="modal-overlay hidden">

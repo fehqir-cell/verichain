@@ -964,126 +964,7 @@ async function submitTip() {
   }
 }
 
-function handleTokenSwap() {
-  if (!state.walletConnected) {
-    showStatusMsg("swap-tx-status", "Please connect your TON wallet to execute DeFi swap.", "error");
-    return;
-  }
 
-  const fromAsset = document.getElementById("swap-from-asset").value;
-  const toAsset = document.getElementById("swap-to-asset").value;
-  const fromAmt = parseFloat(document.getElementById("swap-from-amount").value);
-  
-  if (fromAsset === toAsset) {
-    showStatusMsg("swap-tx-status", "Source and target assets must be different.", "error");
-    return;
-  }
-  
-  if (isNaN(fromAmt) || fromAmt <= 0) {
-    showStatusMsg("swap-tx-status", "Enter a positive transaction volume.", "error");
-    return;
-  }
-  
-  if (state.balances[fromAsset] < fromAmt) {
-    showStatusMsg("swap-tx-status", `Insufficient ${fromAsset} balance.`, "error");
-    return;
-  }
-
-  // Conversion Rates mapping
-  // 1 TON = 20 GRAM
-  // 1 USDT = 4 GRAM
-  // 1 TON = 5 USDT (simulated exchange values)
-  
-  let toAmt = 0;
-  
-  if (fromAsset === 'TON' && toAsset === 'GRAM') toAmt = fromAmt * 20;
-  else if (fromAsset === 'USDT' && toAsset === 'GRAM') toAmt = fromAmt * 4;
-  else if (fromAsset === 'TON' && toAsset === 'USDT') toAmt = fromAmt * 5;
-  else if (fromAsset === 'USDT' && toAsset === 'TON') toAmt = fromAmt / 5;
-  else if (fromAsset === 'GRAM' && toAsset === 'TON') toAmt = fromAmt / 20;
-  else if (fromAsset === 'GRAM' && toAsset === 'USDT') toAmt = fromAmt / 4;
-  
-  // Execute balances updates
-  state.balances[fromAsset] -= fromAmt;
-  state.balances[toAsset] += toAmt;
-  
-  // Ledger log
-  addTransaction('Swap', `Swapped ${fromAsset} for ${toAsset}`, `-${fromAmt.toFixed(2)} ${fromAsset}`, 'ton...defi');
-  addTransaction('Swap', `Received swap output`, `+${toAmt.toFixed(2)} ${toAsset}`, 'ton...defi');
-  
-  showStatusMsg("swap-tx-status", `Swapped ${fromAmt} ${fromAsset} for ${toAmt.toFixed(2)} ${toAsset}!`, "success");
-  
-  // Update UI & save
-  updateWalletUI();
-  saveAppState();
-  
-  // Recalculate swap forms
-  document.getElementById("swap-from-amount").value = 1;
-  calculateSwapOutput();
-  
-  setTimeout(() => {
-    document.getElementById("modal-swap").classList.add("hidden");
-  }, 1500);
-}
-
-function calculateSwapOutput() {
-  const fromAsset = document.getElementById("swap-from-asset").value;
-  const toAsset = document.getElementById("swap-to-asset").value;
-  const fromAmt = parseFloat(document.getElementById("swap-from-amount").value);
-  const toInput = document.getElementById("swap-to-amount");
-  const rateLabel = document.getElementById("exchange-rate-val");
-  
-  if (isNaN(fromAmt) || fromAmt <= 0) {
-    if (toInput) toInput.value = 0;
-    return;
-  }
-  
-  let multiplier = 0;
-  if (fromAsset === 'TON' && toAsset === 'GRAM') { multiplier = 20; if (rateLabel) rateLabel.textContent = "1 TON ≈ 20 GRAM"; }
-  else if (fromAsset === 'USDT' && toAsset === 'GRAM') { multiplier = 4; if (rateLabel) rateLabel.textContent = "1 USDT ≈ 4 GRAM"; }
-  else if (fromAsset === 'TON' && toAsset === 'USDT') { multiplier = 5; if (rateLabel) rateLabel.textContent = "1 TON ≈ 5 USDT"; }
-  else if (fromAsset === 'USDT' && toAsset === 'TON') { multiplier = 0.2; if (rateLabel) rateLabel.textContent = "5 USDT ≈ 1 TON"; }
-  else if (fromAsset === 'GRAM' && toAsset === 'TON') { multiplier = 0.05; if (rateLabel) rateLabel.textContent = "20 GRAM ≈ 1 TON"; }
-  else if (fromAsset === 'GRAM' && toAsset === 'USDT') { multiplier = 0.25; if (rateLabel) rateLabel.textContent = "4 GRAM ≈ 1 USDT"; }
-  else { multiplier = 1; if (rateLabel) rateLabel.textContent = "Rate is parity"; }
-  
-  if (toInput) toInput.value = (fromAmt * multiplier).toFixed(2);
-}
-
-// Deposit / Withdraw helpers
-window.depositCrypto = function(asset) {
-  if (!state.walletConnected) {
-    alert("Please connect your wallet first.");
-    return;
-  }
-  const amt = prompt(`Enter amount of simulated ${asset} to deposit from external wallet:`, "10.0");
-  const parseAmt = parseFloat(amt);
-  if (!isNaN(parseAmt) && parseAmt > 0) {
-    state.balances[asset] += parseAmt;
-    addTransaction('Deposit', `Deposited ${asset} to app balance`, `+${parseAmt.toFixed(2)} ${asset}`, 'ton...in03');
-    updateWalletUI();
-    saveAppState();
-  }
-};
-
-window.withdrawCrypto = function(asset) {
-  if (!state.walletConnected) {
-    alert("Connect wallet to execute transfers.");
-    return;
-  }
-  const amt = prompt(`Enter amount of simulated ${asset} to withdraw:`, "5.0");
-  const parseAmt = parseFloat(amt);
-  if (!isNaN(parseAmt) && parseAmt > 0) {
-    if (state.balances[asset] < parseAmt) {
-      alert("Insufficient account balance.");
-      return;
-    }
-    state.balances[asset] -= parseAmt;
-    addTransaction('Withdraw', `Withdrew ${asset} to external address`, `-${parseAmt.toFixed(2)} ${asset}`, 'ton...out9');
-    updateWalletUI();
-    saveAppState();
-  }
-};
 
 // --- URL ANALYSIS ACTION ---
 function triggerUrlAnalysis() {
@@ -1375,9 +1256,6 @@ function attachEventListeners() {
   });
   safeAddListener("cancel-vote-btn", "click", () => {
     document.getElementById("modal-vote").classList.add("hidden");
-  });
-  safeAddListener("close-swap-btn-x", "click", () => {
-    document.getElementById("modal-swap").classList.add("hidden");
   });
 
   // Unlock Premium Actions
