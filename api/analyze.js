@@ -85,7 +85,8 @@ Do not wrap the JSON in markdown code blocks. Just output raw JSON.`;
       return res.status(502).json({ error: 'AI analysis failed' });
     }
 
-    const aiText = geminiData.candidates[0].content.parts[0].text;
+    let aiText = geminiData.candidates[0].content.parts[0].text;
+    aiText = aiText.replace(/^```json/mi, "").replace(/```$/m, "").trim();
     const resultObj = JSON.parse(aiText);
 
     res.status(200).json(resultObj);
