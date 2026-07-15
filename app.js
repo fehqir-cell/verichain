@@ -5,15 +5,15 @@ let state = {
   walletConnected: false,
   walletAddress: '',
   balances: {
-    TON: 25.40,
-    USDT: 120.00,
-    VERI: 120
+    TON: 0.00,
+    USDT: 0.00,
+    GRAM: 100.00
   },
   unlockedArticles: [3], // Article IDs that have been unlocked. Article 3 is free/unlocked by default.
   transactions: [
-    { id: 'tx_001', type: 'Reward', title: 'Fact-Check Consensus Payout', amount: '15.00 VERI', time: '1 day ago', hash: 'ton...4d9a' },
-    { id: 'tx_002', type: 'Stake', title: 'Staked for Claim #10842', amount: '-10.00 VERI', time: '2 days ago', hash: 'ton...b20f' },
-    { id: 'tx_003', type: 'Tip', title: 'Tip to BBC News team', amount: '-0.50 TON', time: '3 days ago', hash: 'ton...31a2' }
+    { id: 'tx_001', type: 'Reward', title: 'Fact-Check Consensus Payout', amount: '15.00 GRAM', time: '1 day ago', hash: 'ton...4d9a' },
+    { id: 'tx_002', type: 'Stake', title: 'Staked for Claim #10842', amount: '-10.00 GRAM', time: '2 days ago', hash: 'ton...b20f' },
+    { id: 'tx_003', type: 'Tip', title: 'Tip to AP News team', amount: '-0.50 TON', time: '3 days ago', hash: 'ton...31a2' }
   ],
   activeView: 'feed',
   currentArticle: null,
@@ -180,7 +180,7 @@ let state = {
       text: "A controversial whitepaper asserts that launching high-reflectivity orbital micro-shields could reduce radiative forcing by 1.8%, cooling Earth quickly.",
       category: "science",
       submitter: "science_advocate",
-      pool: "2,400 VERI",
+      pool: "2,400 GRAM",
       votesTrue: 88,
       votesMisleading: 52,
       votesFalse: 14,
@@ -210,7 +210,7 @@ let state = {
       text: "Social media posts claim health authorities have prohibited all synthetic meat due to unproven health concerns, ordering immediate shelf removals.",
       category: "science",
       submitter: "green_foodie",
-      pool: "800 VERI",
+      pool: "800 GRAM",
       votesTrue: 3,
       votesMisleading: 9,
       votesFalse: 78,
@@ -249,14 +249,50 @@ document.addEventListener("DOMContentLoaded", () => {
     tg.expand(); // Full viewport height
     
     const tgUser = tg.initDataUnsafe?.user;
-    if (tgUser) {
-      // Auto-connect wallet based on Telegram user ID if not already connected
-      if (!state.walletConnected) {
-        state.walletConnected = true;
-        state.walletAddress = "UQ" + tgUser.id.toString(16).padEnd(42, 'x'); // Generate mock TON address from user ID
-        addTransaction('Connect', `Auto-connected via Telegram context`, '0.00 TON', 'tg...' + tgUser.id.toString().substring(0,4));
-      }
+    if (tgUser && !state.walletConnected) {
+      // Auto-connect simulated wallet based on Telegram user ID if not already connected
+      state.walletConnected = true;
+      state.walletAddress = "UQ" + tgUser.id.toString(16).padEnd(42, 'x'); // Generate mock TON address
+      addTransaction('Connect', `Auto-connected via Telegram context`, '0.00 TON', 'tg...' + tgUser.id.toString().substring(0,4));
     }
+  }
+
+  // Initialize TON Connect UI SDK
+  let tonConnectUI = null;
+  try {
+    if (window.TONConnectUI?.TonConnectUI) {
+      tonConnectUI = new window.TONConnectUI.TonConnectUI({
+        manifestUrl: window.location.origin + '/tonconnect-manifest.json',
+        buttonRootId: 'ton-connect-btn'
+      });
+      
+      // Subscribe to TON Connect state changes
+      tonConnectUI.onStatusChange(async (wallet) => {
+        if (wallet) {
+          state.walletConnected = true;
+          state.walletAddress = wallet.account.address;
+          
+          // Fetch actual balances using public Tonapi.io RPC nodes
+          await fetchRealOnChainBalances(wallet.account.address, wallet.account.chain);
+        } else {
+          // If disconnected, fallback to Telegram context if available
+          const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+          if (tgUser) {
+            state.walletConnected = true;
+            state.walletAddress = "UQ" + tgUser.id.toString(16).padEnd(42, 'x');
+          } else {
+            state.walletConnected = false;
+            state.walletAddress = '';
+            state.balances.TON = 0.00;
+            state.balances.USDT = 0.00;
+          }
+          updateWalletUI();
+          saveAppState();
+        }
+      });
+    }
+  } catch (e) {
+    console.error("Error initializing TON Connect UI:", e);
   }
 
   // Set initial view navigation
@@ -292,6 +328,43 @@ function saveAppState() {
   }));
 }
 
+// --- FETCH REAL ON-CHAIN BALANCES FROM PUBLIC RPC ---
+async function fetchRealOnChainBalances(rawAddress, chainId) {
+  try {
+    // ChainId -239 is Mainnet, -3 is Testnet
+    const isTestnet = chainId === -3;
+    const baseApi = isTestnet ? 'https://testnet.tonapi.io' : 'https://tonapi.io';
+    
+    // 1. Fetch native TON balance
+    const accountRes = await fetch(`${baseApi}/v2/accounts/${rawAddress}`);
+    if (accountRes.ok) {
+      const accountData = await accountRes.json();
+      // balance is returned in nanotons (1 TON = 10^9 nanotons)
+      state.balances.TON = accountData.balance / 1e9;
+    }
+    
+    // 2. Fetch Jettons (for USDT)
+    const jettonsRes = await fetch(`${baseApi}/v2/accounts/${rawAddress}/jettons`);
+    if (jettonsRes.ok) {
+      const jettonsData = await jettonsRes.json();
+      // Search for USDT contract balance
+      const usdtJetton = jettonsData.balances?.find(b => b.jetton.symbol === 'USDT');
+      if (usdtJetton) {
+        // USDT usually has 6 decimals on TON
+        const decimals = usdtJetton.jetton.decimals || 6;
+        state.balances.USDT = Number(usdtJetton.balance) / Math.pow(10, decimals);
+      } else {
+        state.balances.USDT = 0.00;
+      }
+    }
+    
+    updateWalletUI();
+    saveAppState();
+  } catch (err) {
+    console.error("Failed to fetch live TON/USDT balances:", err);
+  }
+}
+
 // --- VIEW NAVIGATION ---
 function setupNavigation() {
   const navItems = document.querySelectorAll(".nav-item");
@@ -323,22 +396,13 @@ function setupNavigation() {
   });
 }
 
-// --- MOCK WALLET CONNECT FLOW (TON CONNECT SIMULATION) ---
+// --- MOCK WALLET CONNECT FLOW (TON CONNECT INTEGRATION) ---
 function updateWalletUI() {
-  const connectBtn = document.getElementById("wallet-connect-btn");
-  const connectedBadge = document.getElementById("wallet-connected-badge");
-  const addrText = document.getElementById("wallet-addr-text");
   const profileName = document.getElementById("profile-name");
   const profileInitials = document.getElementById("profile-initials");
   const profileTier = document.getElementById("profile-tier");
 
   if (state.walletConnected) {
-    connectBtn.classList.add("hidden");
-    connectedBadge.classList.remove("hidden");
-    
-    // Shorten address format (e.g. UQA1...8x2a)
-    addrText.textContent = state.walletAddress.substring(0, 4) + "..." + state.walletAddress.substring(state.walletAddress.length - 4);
-    
     // Check if we can extract Telegram user information
     let displayName = "Validator Pilot #" + state.walletAddress.substring(state.walletAddress.length - 4);
     let displayInitials = "VP";
@@ -348,6 +412,10 @@ function updateWalletUI() {
       const tgUser = tg.initDataUnsafe.user;
       displayName = tgUser.username ? `@${tgUser.username}` : `${tgUser.first_name} ${tgUser.last_name || ''}`;
       displayInitials = tgUser.first_name.substring(0, 2).toUpperCase();
+    } else if (state.walletAddress && state.walletAddress.length > 10) {
+      // Shortened address display
+      displayName = state.walletAddress.substring(0, 6) + "..." + state.walletAddress.substring(state.walletAddress.length - 4);
+      displayInitials = "WA";
     }
     
     profileName.textContent = displayName;
@@ -357,9 +425,6 @@ function updateWalletUI() {
     profileTier.style.borderColor = "rgba(157, 78, 221, 0.4)";
     profileTier.style.background = "rgba(157, 78, 221, 0.12)";
   } else {
-    connectBtn.classList.remove("hidden");
-    connectedBadge.classList.add("hidden");
-    
     profileName.textContent = "Anonymous Pilot";
     profileInitials.textContent = "AN";
     profileTier.textContent = "Tier 1: Reader";
@@ -368,48 +433,12 @@ function updateWalletUI() {
     profileTier.style.background = "";
   }
 
-  // Update wallet hub views
+  // Update wallet hub views with real/live balance details
   document.getElementById("bal-ton").textContent = state.balances.TON.toFixed(2);
   document.getElementById("bal-ton-usd").textContent = (state.balances.TON * 7.20).toFixed(2); // Mock TON rate $7.20
   document.getElementById("bal-usdt").textContent = state.balances.USDT.toFixed(2);
-  document.getElementById("bal-veri").textContent = state.balances.VERI;
-}
-
-function handleWalletConnect() {
-  if (state.walletConnected) {
-    // Already connected, disconnect
-    state.walletConnected = false;
-    state.walletAddress = '';
-    updateWalletUI();
-    saveAppState();
-    return;
-  }
-
-  // Simulate TON Connect UI Modal trigger and signature
-  const mockAddresses = [
-    "EQA12n3d7xF82vLp4m9qR7sE8a2z4xY9oP4m7x2w3e1a8b9c",
-    "EQB94x2a8m3d7yR5zQ4lP6xY1t8a5e9p7o2k6h4v3m1b9c8d",
-    "UQC4m8v2a7x9yP5zT3lH8xK9e2o1n5v7a9b3d4f8h2j6k7l1"
-  ];
-  
-  // Random address selection
-  const randAddr = mockAddresses[Math.floor(Math.random() * mockAddresses.length)];
-  
-  // Alert simulated process
-  const connectBtnText = document.getElementById("connect-btn-text");
-  connectBtnText.textContent = "Authorizing...";
-  
-  setTimeout(() => {
-    state.walletConnected = true;
-    state.walletAddress = randAddr;
-    connectBtnText.textContent = "Connect Wallet";
-    updateWalletUI();
-    
-    // Add ledger log
-    addTransaction('Connect', 'Wallet connected via TON Connect', '0.00 TON', randAddr.substring(0, 4) + '...' + randAddr.substring(randAddr.length - 4));
-    
-    saveAppState();
-  }, 1000);
+  document.getElementById("bal-veri").textContent = state.balances.GRAM.toFixed(2);
+  document.getElementById("profile-rep").textContent = state.balances.GRAM.toFixed(2) + " GRAM";
 }
 
 // --- NEWS FEED ENGINE ---
@@ -424,29 +453,17 @@ function renderArticles() {
   const status = state.filterStatus;
 
   const filtered = state.articles.filter(article => {
-    // Search keyword
     const matchSearch = article.title.toLowerCase().includes(search) || article.teaser.toLowerCase().includes(search) || article.source.toLowerCase().includes(search);
-    
-    // Category filter
     const matchCategory = category === 'all' || article.category === category;
     
-    // Bias filter mapping
     let matchBias = true;
-    if (bias === 'left') {
-      matchBias = article.biasClass === 'left';
-    } else if (bias === 'right') {
-      matchBias = article.biasClass === 'right';
-    } else if (bias === 'center') {
-      matchBias = article.biasClass === 'center';
-    }
+    if (bias === 'left') matchBias = article.biasClass === 'left';
+    else if (bias === 'right') matchBias = article.biasClass === 'right';
+    else if (bias === 'center') matchBias = article.biasClass === 'center';
 
-    // Status filter mapping
     let matchStatus = true;
-    if (status === 'verified') {
-      matchStatus = article.status === 'verified';
-    } else if (status === 'disputed') {
-      matchStatus = article.status === 'disputed' || article.status === 'unverified' || article.status === 'false';
-    }
+    if (status === 'verified') matchStatus = article.status === 'verified';
+    else if (status === 'disputed') matchStatus = article.status === 'disputed' || article.status === 'unverified' || article.status === 'false';
 
     return matchSearch && matchCategory && matchBias && matchStatus;
   });
@@ -464,14 +481,13 @@ function renderArticles() {
     const card = document.createElement("div");
     card.className = "article-card";
     
-    const isUnlocked = state.unlockedArticles.includes(article.id);
+    const isUnlocked = !article.locked || state.unlockedArticles.includes(article.id);
     const lockIconSvg = article.locked && !isUnlocked ? `
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 2px;">
         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>` : '';
       
-    const biasWord = article.biasClass.toUpperCase();
     const statusClass = `status-${article.status}`;
     
     card.innerHTML = `
@@ -490,22 +506,11 @@ function renderArticles() {
         <span class="status-badge ${statusClass}">${article.statusText}</span>
       </div>
       
-      <div class="card-bias-mini">
-        <div class="bias-lbl-row">
-          <span>LEFT</span>
-          <span style="color: ${article.biasClass === 'center' ? 'var(--text-secondary)' : article.biasClass === 'left' ? 'var(--bias-left-center)' : 'var(--bias-right-center)'}">${article.biasText}</span>
-          <span>RIGHT</span>
-        </div>
-        <div class="bias-spectrum-bar">
-          <span class="bias-marker" style="left: ${article.biasScore}%;"></span>
-        </div>
-      </div>
-      
       <p class="card-teaser">${article.teaser}</p>
       
       <div class="card-actions">
         <button class="btn btn-outline btn-xs" onclick="openArticleDetail(${article.id})">
-          ${lockIconSvg}View Detailed Analysis
+          ${lockIconSvg}View Detailed Report
         </button>
         <button class="btn btn-secondary btn-xs" onclick="openTipDialog(${article.id})">
           <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" style="vertical-align: middle;"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h6M9 12h6"/></svg>
@@ -525,52 +530,55 @@ function openArticleDetail(id) {
   
   state.currentArticle = article;
   
-  // Populate detail UI Elements
+  // Populate basic header details (always visible)
   document.getElementById("detail-category").textContent = article.category;
+  document.getElementById("detail-category-header").textContent = article.category;
   document.getElementById("detail-source").textContent = article.source;
   document.getElementById("detail-time").textContent = article.time;
   document.getElementById("detail-title").textContent = article.title;
-  document.getElementById("detail-teaser").textContent = article.teaser;
   
-  // Bias marker position
-  document.getElementById("detail-bias-marker").style.left = `${article.biasScore}%`;
-  document.getElementById("detail-bias-score").textContent = article.biasText;
-  document.getElementById("detail-framing").textContent = article.framing;
-  
-  // Fact check elements
+  // Fact check status badge (always visible)
   const statusBadge = document.getElementById("detail-status-badge");
   statusBadge.className = `audit-badge status-${article.status}`;
   statusBadge.textContent = article.statusText;
-  
-  document.getElementById("detail-trust-score").textContent = `${article.trustScore}/100`;
-  document.getElementById("detail-audit-desc").textContent = article.auditSummary;
-  
-  // Evidence references
-  const evidenceList = document.getElementById("detail-evidence-list");
-  evidenceList.innerHTML = '';
-  article.evidence.forEach(ev => {
-    const li = document.createElement("li");
-    li.textContent = ev;
-    evidenceList.appendChild(li);
-  });
-  
-  // Premium Content Lock Gate Logic
-  const isUnlocked = state.unlockedArticles.includes(article.id);
+
+  // Paywall & blur controller
+  const isUnlocked = !article.locked || state.unlockedArticles.includes(article.id);
   const premiumGate = document.getElementById("premium-analysis-gate");
-  const premiumContent = document.getElementById("premium-unlocked-content");
-  
-  if (article.locked && !isUnlocked) {
-    // If auto-unlock is toggled and connected, unlock automatically
-    if (state.autoUnlock && state.walletConnected && state.balances.TON >= 0.05) {
-      executeUnlock(article, 'TON', 0.05);
-    } else {
-      premiumGate.classList.remove("hidden");
-      premiumContent.classList.add("hidden");
+  const contentDetails = document.getElementById("premium-locked-details");
+
+  if (!isUnlocked) {
+    // Show paywall gate and blur the details
+    premiumGate.classList.remove("hidden");
+    contentDetails.classList.add("blur-content");
+    
+    // Set auto-unlock check if auto-unlock settings is active
+    if (state.autoUnlock && state.balances.GRAM >= 5.0) {
+      executeGramUnlock(article.id);
     }
   } else {
+    // Hide paywall gate and show crystal-clear details
     premiumGate.classList.add("hidden");
-    premiumContent.classList.remove("hidden");
+    contentDetails.classList.remove("blur-content");
+    
+    // Populate detailed parameters
+    document.getElementById("detail-bias-marker").style.left = `${article.biasScore}%`;
+    document.getElementById("detail-bias-score").textContent = article.biasText;
+    document.getElementById("detail-framing").textContent = article.framing;
+    document.getElementById("detail-trust-score").textContent = `${article.trustScore}/100`;
+    document.getElementById("detail-audit-desc").textContent = article.auditSummary;
+    
+    // Render loaded words list
     populatePremiumContent(article);
+    
+    // Render footnotes evidence list
+    const evidenceList = document.getElementById("detail-evidence-list");
+    evidenceList.innerHTML = '';
+    article.evidence.forEach(ev => {
+      const li = document.createElement("li");
+      li.textContent = ev;
+      evidenceList.appendChild(li);
+    });
   }
   
   // Show detailed modal overlay
@@ -589,35 +597,31 @@ function populatePremiumContent(article) {
   });
 }
 
-function executeUnlock(article, asset, cost) {
-  if (!state.walletConnected) {
-    alert("Please connect your wallet first via the header button.");
+function executeGramUnlock(articleId) {
+  const article = state.articles.find(a => a.id === articleId);
+  if (!article) return;
+
+  if (state.balances.GRAM < 5.0) {
+    alert("Insufficient GRAM tokens. You can swap TON or USDT to GRAM in the Wallet tab.");
     return;
   }
   
-  if (state.balances[asset] < cost) {
-    alert(`Insufficient ${asset} balance to unlock this report.`);
-    return;
-  }
+  // Deduct fee
+  state.balances.GRAM -= 5.0;
+  state.unlockedArticles.push(articleId);
   
-  // Deduct
-  state.balances[asset] -= cost;
-  state.unlockedArticles.push(article.id);
+  // Log transaction
+  const cleanTitle = article.title.length > 20 ? article.title.substring(0, 20) + '...' : article.title;
+  addTransaction('Unlock', `Unlocked report: ${cleanTitle}`, `-5.00 GRAM`, 'ton...gram');
   
-  // Add Transaction
-  const cleanTitle = article.title.length > 25 ? article.title.substring(0, 25) + '...' : article.title;
-  addTransaction('Unlock', `Unlocked report: ${cleanTitle}`, `-${cost.toFixed(2)} ${asset}`, 'ton...ec8b');
-  
-  // Update view
+  // Save and update
   updateWalletUI();
   saveAppState();
   
-  // UI transition in modal
-  document.getElementById("premium-analysis-gate").classList.add("hidden");
-  document.getElementById("premium-unlocked-content").classList.remove("hidden");
-  populatePremiumContent(article);
+  // Redraw modal
+  openArticleDetail(articleId);
   
-  // Re-render feed to reflect unlocked state (remove lock icon)
+  // Re-render feed list to remove lock icon
   renderArticles();
 }
 
@@ -723,12 +727,12 @@ function submitVoteVerdict() {
   
   const stakeVal = parseInt(document.getElementById("vote-stake").value);
   if (isNaN(stakeVal) || stakeVal < 10) {
-    showStatusMsg("vote-submit-status", "Minimum stake is 10 VERI reputation tokens.", "error");
+    showStatusMsg("vote-submit-status", "Minimum stake is 10 GRAM tokens.", "error");
     return;
   }
   
-  if (state.balances.VERI < stakeVal) {
-    showStatusMsg("vote-submit-status", "Insufficient VERI balance. Purchase VERI in the Wallet tab.", "error");
+  if (state.balances.GRAM < stakeVal) {
+    showStatusMsg("vote-submit-status", "Insufficient GRAM balance. Swap TON/USDT to GRAM in the Wallet tab.", "error");
     return;
   }
 
@@ -745,12 +749,12 @@ function submitVoteVerdict() {
   claim.staked = stakeVal;
   
   // Deduct stake
-  state.balances.VERI -= stakeVal;
+  state.balances.GRAM -= stakeVal;
   
   // Log transaction
-  addTransaction('Stake', `Consensus vote for Claim #${claim.id}`, `-${stakeVal}.00 VERI`, 'ton...ff9a');
+  addTransaction('Stake', `Consensus vote for Claim #${claim.id}`, `-${stakeVal}.00 GRAM`, 'ton...ff9a');
   
-  showStatusMsg("vote-submit-status", `Verdict submitted! Staked ${stakeVal} VERI to decentralized validator pool.`, "success");
+  showStatusMsg("vote-submit-status", `Verdict submitted! Staked ${stakeVal} GRAM to decentralized validator pool.`, "success");
   
   // Re-render components
   updateWalletUI();
@@ -779,17 +783,17 @@ function submitNewClaim() {
   }
 
   if (isNaN(stakeVal) || stakeVal < 5) {
-    showStatusMsg("submit-claim-status", "Minimum staking threshold is 5 VERI.", "error");
+    showStatusMsg("submit-claim-status", "Minimum staking threshold is 5 GRAM.", "error");
     return;
   }
 
-  if (state.balances.VERI < stakeVal) {
-    showStatusMsg("submit-claim-status", "Insufficient VERI tokens to cover priority stake.", "error");
+  if (state.balances.GRAM < stakeVal) {
+    showStatusMsg("submit-claim-status", "Insufficient GRAM tokens to cover priority stake.", "error");
     return;
   }
 
   // Deduct Stake
-  state.balances.VERI -= stakeVal;
+  state.balances.GRAM -= stakeVal;
   
   // Register claim
   const newId = 10800 + state.claims.length + 1;
@@ -799,7 +803,7 @@ function submitNewClaim() {
     text: claimText,
     category: "geopolitics", // default
     submitter: "anonymous_pilot",
-    pool: `${stakeVal * 2} VERI`, // Mock pool doubled
+    pool: `${stakeVal * 2} GRAM`, // Mock pool doubled
     votesTrue: 1,
     votesMisleading: 0,
     votesFalse: 0,
@@ -812,9 +816,9 @@ function submitNewClaim() {
   state.claims.unshift(newClaim);
   
   // Add log
-  addTransaction('Submit', `Opened dispute Claim #${newId}`, `-${stakeVal}.00 VERI`, 'ton...a3e9');
+  addTransaction('Submit', `Opened dispute Claim #${newId}`, `-${stakeVal}.00 GRAM`, 'ton...a3e9');
   
-  showStatusMsg("submit-claim-status", `Dispute claim filed successfully! Staked ${stakeVal} VERI.`, "success");
+  showStatusMsg("submit-claim-status", `Dispute claim filed successfully! Staked ${stakeVal} GRAM.`, "success");
   
   updateWalletUI();
   renderClaims();
@@ -945,18 +949,18 @@ function handleTokenSwap() {
   }
 
   // Conversion Rates mapping
-  // 1 TON = 20 VERI
-  // 1 USDT = 4 VERI
+  // 1 TON = 20 GRAM
+  // 1 USDT = 4 GRAM
   // 1 TON = 5 USDT (simulated exchange values)
   
   let toAmt = 0;
   
-  if (fromAsset === 'TON' && toAsset === 'VERI') toAmt = fromAmt * 20;
-  else if (fromAsset === 'USDT' && toAsset === 'VERI') toAmt = fromAmt * 4;
+  if (fromAsset === 'TON' && toAsset === 'GRAM') toAmt = fromAmt * 20;
+  else if (fromAsset === 'USDT' && toAsset === 'GRAM') toAmt = fromAmt * 4;
   else if (fromAsset === 'TON' && toAsset === 'USDT') toAmt = fromAmt * 5;
   else if (fromAsset === 'USDT' && toAsset === 'TON') toAmt = fromAmt / 5;
-  else if (fromAsset === 'VERI' && toAsset === 'TON') toAmt = fromAmt / 20;
-  else if (fromAsset === 'VERI' && toAsset === 'USDT') toAmt = fromAmt / 4;
+  else if (fromAsset === 'GRAM' && toAsset === 'TON') toAmt = fromAmt / 20;
+  else if (fromAsset === 'GRAM' && toAsset === 'USDT') toAmt = fromAmt / 4;
   
   // Execute balances updates
   state.balances[fromAsset] -= fromAmt;
@@ -994,12 +998,12 @@ function calculateSwapOutput() {
   }
   
   let multiplier = 0;
-  if (fromAsset === 'TON' && toAsset === 'VERI') { multiplier = 20; rateLabel.textContent = "1 TON ≈ 20 VERI"; }
-  else if (fromAsset === 'USDT' && toAsset === 'VERI') { multiplier = 4; rateLabel.textContent = "1 USDT ≈ 4 VERI"; }
+  if (fromAsset === 'TON' && toAsset === 'GRAM') { multiplier = 20; rateLabel.textContent = "1 TON ≈ 20 GRAM"; }
+  else if (fromAsset === 'USDT' && toAsset === 'GRAM') { multiplier = 4; rateLabel.textContent = "1 USDT ≈ 4 GRAM"; }
   else if (fromAsset === 'TON' && toAsset === 'USDT') { multiplier = 5; rateLabel.textContent = "1 TON ≈ 5 USDT"; }
   else if (fromAsset === 'USDT' && toAsset === 'TON') { multiplier = 0.2; rateLabel.textContent = "5 USDT ≈ 1 TON"; }
-  else if (fromAsset === 'VERI' && toAsset === 'TON') { multiplier = 0.05; rateLabel.textContent = "20 VERI ≈ 1 TON"; }
-  else if (fromAsset === 'VERI' && toAsset === 'USDT') { multiplier = 0.25; rateLabel.textContent = "4 VERI ≈ 1 USDT"; }
+  else if (fromAsset === 'GRAM' && toAsset === 'TON') { multiplier = 0.05; rateLabel.textContent = "20 GRAM ≈ 1 TON"; }
+  else if (fromAsset === 'GRAM' && toAsset === 'USDT') { multiplier = 0.25; rateLabel.textContent = "4 GRAM ≈ 1 USDT"; }
   else { multiplier = 1; rateLabel.textContent = "Rate is parity"; }
   
   toInput.value = (fromAmt * multiplier).toFixed(2);
@@ -1176,7 +1180,7 @@ function triggerUrlAnalysis() {
       auditSummary: data.auditSummary || "Standard automated evaluation complete.",
       evidence: data.evidence || [`Cryptographic check of domain: ${domainName}`],
       loadedWords: data.loadedWords || [],
-      locked: true
+      locked: true // Paywalled by default!
     };
 
     // Prepend to database
@@ -1267,10 +1271,6 @@ function attachEventListeners() {
   // URL Analyzer Trigger
   document.getElementById("analyze-url-btn").addEventListener("click", triggerUrlAnalysis);
 
-  // Wallet Connection
-  document.getElementById("wallet-connect-btn").addEventListener("click", handleWalletConnect);
-  document.getElementById("wallet-connected-badge").addEventListener("click", handleWalletConnect);
-  
   // Search bar
   document.getElementById("news-search").addEventListener("input", (e) => {
     state.searchQuery = e.target.value;
@@ -1326,11 +1326,8 @@ function attachEventListeners() {
   });
 
   // Unlock Premium Actions
-  document.getElementById("unlock-premium-ton-btn").addEventListener("click", () => {
-    if (state.currentArticle) executeUnlock(state.currentArticle, 'TON', 0.05);
-  });
-  document.getElementById("unlock-premium-usdt-btn").addEventListener("click", () => {
-    if (state.currentArticle) executeUnlock(state.currentArticle, 'USDT', 0.1);
+  document.getElementById("unlock-premium-gram-btn").addEventListener("click", () => {
+    if (state.currentArticle) executeGramUnlock(state.currentArticle.id);
   });
 
   // Tipping Submissions
@@ -1348,7 +1345,6 @@ function attachEventListeners() {
       chip.classList.add("active");
       const asset = chip.getAttribute("data-asset");
       document.getElementById("tip-denom").textContent = asset;
-      // adjust value default
       document.getElementById("tip-amount").value = asset === 'TON' ? 0.2 : 1.0;
     });
   });
@@ -1392,7 +1388,7 @@ function attachEventListeners() {
 
   // Rules / Guides
   document.getElementById("view-rules-btn").addEventListener("click", () => {
-    alert("Verification Consensus Rules:\n1. Provide official government transcripts or verifiable independent journalism feeds.\n2. Staking locks tokens for a 48h resolution window.\n3. Dishonest verdicts that stray from majority consensus are slashed and redistributed to voters.\n4. VERI is staked to earn consensus yields.");
+    alert("Verification Consensus Rules:\n1. Provide official government transcripts or verified independent journalism feeds.\n2. Staking locks tokens for a 48h resolution window.\n3. Dishonest verdicts that stray from majority consensus are slashed and redistributed to voters.\n4. GRAM is staked to earn consensus yields.");
   });
   
   // Claim rewards

@@ -2016,6 +2016,14 @@ input:checked + .slider:before {
   font-weight: 600;
 }
 
+.blur-content {
+  filter: blur(8px);
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.4;
+  transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
 .hidden {
   display: none !important;
 }

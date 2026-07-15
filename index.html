@@ -10,6 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- TON Connect UI SDK -->
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -36,17 +38,7 @@
       
       <!-- Wallet Connector Component -->
       <div class="wallet-section">
-        <button id="wallet-connect-btn" class="btn btn-connect">
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M16 11V7a4 4 0 0 0-8 0v4"/>
-          </svg>
-          <span id="connect-btn-text">Connect Wallet</span>
-        </button>
-        <div id="wallet-connected-badge" class="wallet-badge hidden">
-          <span class="wallet-dot"></span>
-          <span id="wallet-addr-text" class="wallet-addr">ton...8x2a</span>
-        </div>
+        <div id="ton-connect-btn"></div>
       </div>
     </header>
 
@@ -145,7 +137,7 @@
         <div class="hero-card factcheck-hero">
           <div class="hero-content">
             <h2>Truth Mining Protocol</h2>
-            <p>Review active disputed claims, stake your reputation tokens (VERI), upload verified sources, and earn validation bounties.</p>
+            <p>Review active disputed claims, stake your utility tokens (GRAM), upload verified sources, and earn validation bounties.</p>
             <div class="hero-buttons">
               <button id="open-submit-claim-btn" class="btn btn-primary">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 5v14M5 12h14"/></svg>
@@ -181,7 +173,7 @@
               <h3 id="profile-name">Anonymous Pilot</h3>
               <span class="user-tier-badge" id="profile-tier">Tier 1: Reader</span>
             </div>
-            <p class="profile-stats">Reputation Score: <strong id="profile-rep">120 VERI</strong> | Accuracy: <strong class="text-cyan">--</strong></p>
+            <p class="profile-stats">Reputation Score: <strong id="profile-rep">100 GRAM</strong> | Accuracy: <strong class="text-cyan">--</strong></p>
           </div>
         </div>
 
@@ -193,8 +185,8 @@
               <span class="bal-label">TON Balance</span>
               <img src="https://ton.org/download/ton_symbol.svg" alt="TON" class="bal-icon-img" onerror="this.src='https://assets.coingecko.com/coins/images/17980/large/ton_token_blue.png'">
             </div>
-            <div class="bal-val"><span id="bal-ton">25.40</span> <span class="bal-denom">TON</span></div>
-            <div class="bal-usd">≈ $<span id="bal-ton-usd">182.88</span> USD</div>
+            <div class="bal-val"><span id="bal-ton">0.00</span> <span class="bal-denom">TON</span></div>
+            <div class="bal-usd">≈ $<span id="bal-ton-usd">0.00</span> USD</div>
             <div class="bal-footer">
               <button class="btn btn-card-action" onclick="depositCrypto('TON')">Deposit</button>
               <button class="btn btn-card-action btn-card-secondary" onclick="withdrawCrypto('TON')">Withdraw</button>
@@ -210,18 +202,18 @@
                 <path d="M12 6v12M9 9h6M9 12h6"/>
               </svg>
             </div>
-            <div class="bal-val"><span id="bal-usdt">120.00</span> <span class="bal-denom">USDT</span></div>
-            <div class="bal-usd">≈ $120.00 USD</div>
+            <div class="bal-val"><span id="bal-usdt">0.00</span> <span class="bal-denom">USDT</span></div>
+            <div class="bal-usd">≈ $0.00 USD</div>
             <div class="bal-footer">
               <button class="btn btn-card-action" onclick="depositCrypto('USDT')">Deposit</button>
               <button class="btn btn-card-action btn-card-secondary" onclick="withdrawCrypto('USDT')">Withdraw</button>
             </div>
           </div>
 
-          <!-- Balance Card 3: VERI (Utility/Reputation) -->
+          <!-- Balance Card 3: GRAM (Utility/Payment) -->
           <div class="balance-card grad-veri">
             <div class="bal-header">
-              <span class="bal-label">VERI (Reputation)</span>
+              <span class="bal-label">GRAM Balance (Utility)</span>
               <svg class="bal-icon text-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/>
                 <path d="M12 22V12"/>
@@ -229,8 +221,8 @@
                 <path d="M12 12 2 8.5"/>
               </svg>
             </div>
-            <div class="bal-val"><span id="bal-veri">120</span> <span class="bal-denom">VERI</span></div>
-            <div class="bal-usd" id="bal-veri-staked">Staked for consensus: 50 VERI</div>
+            <div class="bal-val"><span id="bal-veri">100.00</span> <span class="bal-denom">GRAM</span></div>
+            <div class="bal-usd" id="bal-veri-staked">Staked for consensus: 20.00 GRAM</div>
             <div class="bal-footer">
               <button class="btn btn-card-action btn-purple" id="open-swap-btn">Swap Tokens</button>
               <button class="btn btn-card-action btn-card-secondary" id="claim-rewards-btn">Claim Rewards</button>
@@ -258,7 +250,7 @@
           <div class="setting-item">
             <div class="setting-desc">
               <h4>Auto-Unlock Reports</h4>
-              <p>Automatically pay micro-tips (0.05 TON) to unlock premium AI bias indicators instantly.</p>
+              <p>Automatically spend GRAM to unlock premium AI bias indicators instantly.</p>
             </div>
             <label class="switch">
               <input type="checkbox" id="setting-auto-unlock">
@@ -272,9 +264,9 @@
               <p>Increase minimum stake for claims verification. Higher tiers earn larger share of reward pool.</p>
             </div>
             <select class="settings-select" id="setting-stake-tier">
-              <option value="1">Tier 1: 10 VERI / vote</option>
-              <option value="2">Tier 2: 50 VERI / vote</option>
-              <option value="3">Tier 3: 200 VERI / vote</option>
+              <option value="1">Tier 1: 10 GRAM / vote</option>
+              <option value="2">Tier 2: 50 GRAM / vote</option>
+              <option value="3">Tier 3: 200 GRAM / vote</option>
             </select>
           </div>
 
@@ -288,7 +280,7 @@
 
           <div class="info-block">
             <h4>Decentralized Governance Notice</h4>
-            <p>VeriChain operates as a Decentralized Autonomous Organization (DAO). Staking VERI gives users proportional voting weight on dispute protocols and content classification revisions. All bias reports and verification summaries are securely hashed and tracked for cryptographic transparency.</p>
+            <p>VeriChain operates as a Decentralized Autonomous Organization (DAO). Staking GRAM gives users proportional voting weight on dispute protocols and content classification revisions. All bias reports and verification summaries are securely hashed and tracked for cryptographic transparency.</p>
           </div>
         </div>
       </section>
@@ -330,7 +322,7 @@
       </button>
     </nav>
 
-    <!-- MODAL 1: ARTICLE DETAILED ANALYSIS VIEW -->
+    <!-- MODAL 1: ARTICLE DETAILED ANALYSIS VIEW (PAYWALLED) -->
     <div id="modal-article-detail" class="modal-overlay hidden">
       <div class="modal-container slide-up">
         <div class="modal-header">
@@ -346,89 +338,90 @@
 
           <h2 class="detail-title" id="detail-title">Global Energy Summit Reaches Landmark Accord on Renewable Subsidies</h2>
           
-          <p class="detail-description" id="detail-teaser">
-            An overview of the landmark treaty and key political conflicts surrounding its drafting...
-          </p>
-
-          <!-- BIAS ANALYSIS MODULE -->
-          <div class="detail-analysis-box">
-            <h4 class="box-title">AI Linguistic Bias Assessment</h4>
-            
-            <div class="bias-indicator-row">
-              <span class="bias-spectrum-label">Left</span>
-              <div class="bias-spectrum-bar">
-                <span class="bias-marker" id="detail-bias-marker" style="left: 50%;"></span>
-              </div>
-              <span class="bias-spectrum-label">Right</span>
-            </div>
-            
-            <div class="bias-stats-grid">
-              <div class="bias-stat">
-                <span class="stat-lbl">Bias Score</span>
-                <span class="stat-val" id="detail-bias-score">C-0.08 (Center)</span>
-              </div>
-              <div class="bias-stat">
-                <span class="stat-lbl">Framing Index</span>
-                <span class="stat-val" id="detail-framing">Balanced / Direct</span>
-              </div>
-            </div>
-
-            <!-- PREMIUM DETAILED ANALYSIS GATE -->
-            <div id="premium-analysis-gate" class="premium-lock-overlay">
-              <div class="lock-content">
-                <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                <h3>Unlock Full Linguistic Network Analysis</h3>
-                <p>Unlock syntax highlighting of loaded vocabulary, selective source framing matrices, and outlet historical rating profile reports.</p>
-                <div class="gate-actions">
-                  <button id="unlock-premium-ton-btn" class="btn btn-primary">
-                    Unlock for 0.05 TON
-                  </button>
-                  <button id="unlock-premium-usdt-btn" class="btn btn-outline">
-                    Unlock for 0.1 USDT
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- PREMIUM UNLOCKED CONTENT (HIDDEN BY DEFAULT) -->
-            <div id="premium-unlocked-content" class="premium-unlocked hidden">
-              <h5 class="section-title">Linguistic Load-Words Flagged</h5>
-              <div class="load-words-list" id="detail-load-words">
-                <!-- Dynamically populated loaded words -->
-              </div>
-              
-              <h5 class="section-title mt-12">Framing Matrix & Source Plurality</h5>
-              <p class="matrix-text" id="detail-framing-desc">
-                Source relies on 4 independent regulatory feeds and represents perspectives from both developing and advanced economies equally. High quotation density indicates direct reporting.
-              </p>
-            </div>
+          <div class="detail-status-header-row" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+             <span class="audit-badge" id="detail-status-badge">Verified</span>
+             <span class="category-tag" id="detail-category-header">Geopolitics</span>
           </div>
 
-          <!-- FACT-CHECKING DETAILS -->
-          <div class="detail-factcheck-box mt-12">
-            <h4 class="box-title">Fact-Check Audit Status</h4>
+          <!-- Wrap report contents in relative container with paywall gate -->
+          <div class="report-content-container" style="position: relative; width: 100%;">
             
-            <div class="audit-status-row">
-              <span class="audit-badge" id="detail-status-badge">Verified</span>
-              <span class="audit-score">Trust Index: <strong id="detail-trust-score">98/100</strong></span>
-            </div>
+             <!-- Paywall Gate -->
+             <div id="premium-analysis-gate" class="premium-lock-overlay">
+               <div class="lock-content">
+                 <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                   <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                 </svg>
+                 <h3>Unlock Full Verification Report</h3>
+                 <p>Spend GRAM to inspect bias indicators, loaded language highlights, and verified citation logs.</p>
+                 <div class="gate-actions">
+                   <button id="unlock-premium-gram-btn" class="btn btn-primary">
+                     Unlock for 5.0 GRAM
+                   </button>
+                 </div>
+               </div>
+             </div>
 
-            <p class="audit-summary-text" id="detail-audit-desc">
-              Claim: The accord locks subsidies until 2032. 
-              Verdict: TRUE. Confirmed by official draft page 42 published by the UNEP on June 29.
-            </p>
+             <!-- Locked Details (blurred if locked) -->
+             <div id="premium-locked-details">
+               <!-- BIAS ANALYSIS MODULE -->
+               <div class="detail-analysis-box">
+                 <h4 class="box-title">AI Linguistic Bias Assessment</h4>
+                 
+                 <div class="bias-indicator-row">
+                   <span class="bias-spectrum-label">Left</span>
+                   <div class="bias-spectrum-bar">
+                     <span class="bias-marker" id="detail-bias-marker" style="left: 50%;"></span>
+                   </div>
+                   <span class="bias-spectrum-label">Right</span>
+                 </div>
+                 
+                 <div class="bias-stats-grid">
+                   <div class="bias-stat">
+                     <span class="stat-lbl">Bias Score</span>
+                     <span class="stat-val" id="detail-bias-score">C-0.08 (Center)</span>
+                   </div>
+                   <div class="bias-stat">
+                     <span class="stat-lbl">Framing Index</span>
+                     <span class="stat-val" id="detail-framing">Balanced / Direct</span>
+                   </div>
+                 </div>
 
-            <div class="audit-evidence-section">
-              <h5>Supporting Evidence & Footnotes</h5>
-              <ul class="evidence-list" id="detail-evidence-list">
-                <!-- Dynamically populated evidence -->
-              </ul>
-            </div>
+                 <!-- PREMIUM UNLOCKED CONTENT -->
+                 <h5 class="section-title mt-12">Linguistic Load-Words Flagged</h5>
+                 <div class="load-words-list" id="detail-load-words">
+                   <!-- Dynamically populated loaded words -->
+                 </div>
+                 
+                 <h5 class="section-title mt-12">Framing Matrix & Source Plurality</h5>
+                 <p class="matrix-text" id="detail-framing-desc">
+                   Source relies on 4 independent regulatory feeds and represents perspectives from both developing and advanced economies equally. High quotation density indicates direct reporting.
+                 </p>
+               </div>
+
+               <!-- FACT-CHECKING DETAILS -->
+               <div class="detail-factcheck-box mt-12">
+                 <h4 class="box-title">Fact-Check Audit Status</h4>
+                 
+                 <div class="audit-status-row">
+                   <span class="audit-score">Trust Index: <strong id="detail-trust-score">98/100</strong></span>
+                 </div>
+
+                 <p class="audit-summary-text" id="detail-audit-desc">
+                   Claim: The accord locks subsidies until 2032. 
+                   Verdict: TRUE. Confirmed by official draft page 42 published by the UNEP on June 29.
+                 </p>
+
+                 <div class="audit-evidence-section">
+                   <h5>Supporting Evidence & Footnotes</h5>
+                   <ul class="evidence-list" id="detail-evidence-list">
+                     <!-- Dynamically populated evidence -->
+                   </ul>
+                 </div>
+               </div>
+             </div>
           </div>
-
         </div>
 
         <div class="modal-footer">
@@ -490,7 +483,7 @@
           <button class="modal-close" id="close-submit-claim-btn">&times;</button>
         </div>
         <div class="modal-body">
-          <p class="form-instruction">Provide the URL of the article and describe the specific claim that needs verification. Staking VERI tokens raises claims in the verifiers priority queue.</p>
+          <p class="form-instruction">Provide the URL of the article and describe the specific claim that needs verification. Staking GRAM tokens raises claims in the verifiers priority queue.</p>
           
           <div class="form-group">
             <label for="claim-url">Article URL:</label>
@@ -508,10 +501,10 @@
           </div>
 
           <div class="form-group mt-12">
-            <label for="claim-stake">Stake VERI tokens to prioritize (Min 5):</label>
+            <label for="claim-stake">Stake GRAM tokens to prioritize (Min 5):</label>
             <div class="stake-input-wrapper">
               <input type="number" id="claim-stake" value="10" min="5">
-              <span>VERI</span>
+              <span>GRAM</span>
             </div>
             <p class="help-text">You will earn your stake back plus validation fees if the claim is verified as true/false based on consensus. If your claim submission is malicious, your stake may be slashed.</p>
           </div>
@@ -568,10 +561,10 @@
           </div>
 
           <div class="form-group mt-12">
-            <label for="vote-stake">Reputation Stake (Min 10 VERI):</label>
+            <label for="vote-stake">Reputation Stake (Min 10 GRAM):</label>
             <div class="stake-input-wrapper">
               <input type="number" id="vote-stake" value="10" min="10">
-              <span>VERI</span>
+              <span>GRAM</span>
             </div>
             <p class="help-text">Your stake secures your vote. Honest consensus voters receive proportional distribution from the reward pool. Incorrect voters lose their staked reputation.</p>
           </div>
@@ -600,7 +593,7 @@
               <select id="swap-from-asset">
                 <option value="TON">TON</option>
                 <option value="USDT">USDT</option>
-                <option value="VERI">VERI</option>
+                <option value="GRAM">GRAM</option>
               </select>
             </div>
           </div>
@@ -617,7 +610,7 @@
             <div class="swap-row">
               <input type="number" id="swap-to-amount" value="100" readonly>
               <select id="swap-to-asset">
-                <option value="VERI" selected>VERI</option>
+                <option value="GRAM" selected>GRAM</option>
                 <option value="TON">TON</option>
                 <option value="USDT">USDT</option>
               </select>
@@ -626,7 +619,7 @@
 
           <div class="exchange-rate-row mt-12">
             <span>Exchange Rate:</span>
-            <strong id="exchange-rate-val">1 TON ≈ 20 VERI</strong>
+            <strong id="exchange-rate-val">1 TON ≈ 20 GRAM</strong>
           </div>
           
           <div id="swap-tx-status" class="status-msg mt-12 hidden"></div>
