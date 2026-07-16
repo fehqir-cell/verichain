@@ -1,6 +1,6 @@
-# VeriChain News (Decentralized News Aggregator & Fact-Checking)
+# VerifChain (Decentralized News Aggregator & Fact-Checking)
 
-🚀 **VeriChain News** is a premium, futuristic Telegram Mini App designed to combat misinformation and provide transparency in the modern media landscape. It combines AI-driven linguistic bias detection with a decentralized, community-driven fact-checking consensus protocol, fully backed by simulated TON Connect wallet integration.
+🚀 **VerifChain** is a premium, futuristic Telegram Mini App designed to combat misinformation and provide transparency in the modern media landscape. It combines AI-driven linguistic bias detection with a decentralized, community-driven fact-checking consensus protocol, fully backed by simulated TON Connect wallet integration.
 
 ---
 
@@ -14,7 +14,7 @@
 ### 2. AI Linguistic Bias Spectrometer
 - View a visual bias index mapping where an article lands on the political spectrum (Left to Right).
 - Assess source framing structures and structural quote density.
-- **Premium Reports**: Unlock detailed linguistic load-word flags and citation network analysis by paying a micro-fee (`0.05 TON` or `0.10 USDT`).
+- **Premium Reports**: Unlock detailed linguistic load-word flags and citation network analysis by paying a micro-fee (`0.1 TON`).
 
 ### 3. Community-Driven Fact-Checking (Truth Mining)
 - **Review Queue**: Review active disputes on controversial claims, upload official source links, cast your verdict (True, Misleading, or False), and stake your `VERI` reputation tokens to secure your vote.
