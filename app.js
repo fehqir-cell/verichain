@@ -174,7 +174,7 @@ let state = {
       text: "A controversial whitepaper asserts that launching high-reflectivity orbital micro-shields could reduce radiative forcing by 1.8%, cooling Earth quickly.",
       category: "science",
       submitter: "science_advocate",
-      pool: "2,400 GRAM",
+      pool: "2,400 TON",
       votesTrue: 88,
       votesMisleading: 52,
       votesFalse: 14,
@@ -204,7 +204,7 @@ let state = {
       text: "Social media posts claim health authorities have prohibited all synthetic meat due to unproven health concerns, ordering immediate shelf removals.",
       category: "science",
       submitter: "green_foodie",
-      pool: "800 GRAM",
+      pool: "800 TON",
       votesTrue: 3,
       votesMisleading: 9,
       votesFalse: 78,
@@ -612,8 +612,7 @@ async function executeTonUnlock(articleId) {
         {
           address: CORPORATE_WALLET_ADDRESS,
           amount: nanotons,
-          payload: '' // Optionally add a memo here
-        }
+                  }
       ]
     };
 
@@ -749,12 +748,12 @@ function submitVoteVerdict() {
   
   const stakeVal = parseInt(document.getElementById("vote-stake").value);
   if (isNaN(stakeVal) || stakeVal < 10) {
-    showStatusMsg("vote-submit-status", "Minimum stake is 10 GRAM tokens.", "error");
+    showStatusMsg("vote-submit-status", "Minimum stake is 10 TON tokens.", "error");
     return;
   }
   
-  if (state.balances.GRAM < stakeVal) {
-    showStatusMsg("vote-submit-status", "Insufficient GRAM balance. Swap TON/USDT to GRAM in the Wallet tab.", "error");
+  if (state.balances.TON < stakeVal) {
+    showStatusMsg("vote-submit-status", "Insufficient TON balance. Swap TON/USDT to TON in the Wallet tab.", "error");
     return;
   }
 
@@ -771,12 +770,12 @@ function submitVoteVerdict() {
   claim.staked = stakeVal;
   
   // Deduct stake
-  state.balances.GRAM -= stakeVal;
+  state.balances.TON -= stakeVal;
   
   // Log transaction
-  addTransaction('Stake', `Consensus vote for Claim #${claim.id}`, `-${stakeVal}.00 GRAM`, 'ton...ff9a');
+  addTransaction('Stake', `Consensus vote for Claim #${claim.id}`, `-${stakeVal}.00 TON`, 'ton...ff9a');
   
-  showStatusMsg("vote-submit-status", `Verdict submitted! Staked ${stakeVal} GRAM to decentralized validator pool.`, "success");
+  showStatusMsg("vote-submit-status", `Verdict submitted! Staked ${stakeVal} TON to decentralized validator pool.`, "success");
   
   // Re-render components
   updateWalletUI();
@@ -805,17 +804,17 @@ function submitNewClaim() {
   }
 
   if (isNaN(stakeVal) || stakeVal < 5) {
-    showStatusMsg("submit-claim-status", "Minimum staking threshold is 5 GRAM.", "error");
+    showStatusMsg("submit-claim-status", "Minimum staking threshold is 5 TON.", "error");
     return;
   }
 
-  if (state.balances.GRAM < stakeVal) {
-    showStatusMsg("submit-claim-status", "Insufficient GRAM tokens to cover priority stake.", "error");
+  if (state.balances.TON < stakeVal) {
+    showStatusMsg("submit-claim-status", "Insufficient TON tokens to cover priority stake.", "error");
     return;
   }
 
   // Deduct Stake
-  state.balances.GRAM -= stakeVal;
+  state.balances.TON -= stakeVal;
   
   // Register claim
   const newId = 10800 + state.claims.length + 1;
@@ -825,7 +824,7 @@ function submitNewClaim() {
     text: claimText,
     category: "geopolitics", // default
     submitter: "anonymous_pilot",
-    pool: `${stakeVal * 2} GRAM`, // Mock pool doubled
+    pool: `${stakeVal * 2} TON`, // Mock pool doubled
     votesTrue: 1,
     votesMisleading: 0,
     votesFalse: 0,
@@ -838,9 +837,9 @@ function submitNewClaim() {
   state.claims.unshift(newClaim);
   
   // Add log
-  addTransaction('Submit', `Opened dispute Claim #${newId}`, `-${stakeVal}.00 GRAM`, 'ton...a3e9');
+  addTransaction('Submit', `Opened dispute Claim #${newId}`, `-${stakeVal}.00 TON`, 'ton...a3e9');
   
-  showStatusMsg("submit-claim-status", `Dispute claim filed successfully! Staked ${stakeVal} GRAM.`, "success");
+  showStatusMsg("submit-claim-status", `Dispute claim filed successfully! Staked ${stakeVal} TON.`, "success");
   
   updateWalletUI();
   renderClaims();
@@ -938,8 +937,7 @@ async function submitTip() {
         {
           address: CORPORATE_WALLET_ADDRESS,
           amount: nanotons,
-          payload: '' // Optionally add a memo here
-        }
+                  }
       ]
     };
 
@@ -1341,7 +1339,7 @@ function attachEventListeners() {
 
   // Rules / Guides
   safeAddListener("view-rules-btn", "click", () => {
-    alert("Consensus Audit Rules:\n1. Provide official reference URLs or files.\n2. Staking locks tokens for a 48h resolution window.\n3. Dishonest verdicts are slashed and split among the consensus majority.\n4. GRAM is staked to yield verification fees.");
+    alert("Consensus Audit Rules:\n1. Provide official reference URLs or files.\n2. Staking locks tokens for a 48h resolution window.\n3. Dishonest verdicts are slashed and split among the consensus majority.\n4. TON is staked to yield verification fees.");
   });
   
   // Claim rewards

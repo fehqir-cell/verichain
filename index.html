@@ -137,7 +137,7 @@
         <div class="hero-card factcheck-hero">
           <div class="hero-content">
             <h2>Truth Mining Protocol</h2>
-            <p>Review active disputed claims, stake your utility tokens (GRAM), upload verified sources, and earn validation bounties.</p>
+            <p>Review active disputed claims, stake your utility tokens (TON), upload verified sources, and earn validation bounties.</p>
             <div class="hero-buttons">
               <button id="open-submit-claim-btn" class="btn btn-primary">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 5v14M5 12h14"/></svg>
@@ -173,7 +173,7 @@
               <h3 id="profile-name">Anonymous Pilot</h3>
               <span class="user-tier-badge" id="profile-tier">Tier 1: Reader</span>
             </div>
-            <p class="profile-stats">Reputation Score: <strong id="profile-rep">100 GRAM</strong> | Accuracy: <strong class="text-cyan">--</strong></p>
+            <p class="profile-stats">Reputation Score: <strong id="profile-rep">0.00 TON</strong> | Accuracy: <strong class="text-cyan">--</strong></p>
           </div>
         </div>
 
@@ -210,7 +210,7 @@
           <div class="setting-item">
             <div class="setting-desc">
               <h4>Auto-Unlock Reports</h4>
-              <p>Automatically spend GRAM to unlock premium AI bias indicators instantly.</p>
+              <p>Automatically spend TON to unlock premium AI bias indicators instantly.</p>
             </div>
             <label class="switch">
               <input type="checkbox" id="setting-auto-unlock">
@@ -224,9 +224,9 @@
               <p>Increase minimum stake for claims verification. Higher tiers earn larger share of reward pool.</p>
             </div>
             <select class="settings-select" id="setting-stake-tier">
-              <option value="1">Tier 1: 10 GRAM / vote</option>
-              <option value="2">Tier 2: 50 GRAM / vote</option>
-              <option value="3">Tier 3: 200 GRAM / vote</option>
+              <option value="1">Tier 1: 10 TON / vote</option>
+              <option value="2">Tier 2: 50 TON / vote</option>
+              <option value="3">Tier 3: 200 TON / vote</option>
             </select>
           </div>
 
@@ -240,7 +240,7 @@
 
           <div class="info-block">
             <h4>Decentralized Governance Notice</h4>
-            <p>VeriChain operates as a Decentralized Autonomous Organization (DAO). Staking GRAM gives users proportional voting weight on dispute protocols and content classification revisions. All bias reports and verification summaries are securely hashed and tracked for cryptographic transparency.</p>
+            <p>VeriChain operates as a Decentralized Autonomous Organization (DAO). Staking TON gives users proportional voting weight on dispute protocols and content classification revisions. All bias reports and verification summaries are securely hashed and tracked for cryptographic transparency.</p>
           </div>
         </div>
       </section>
@@ -436,7 +436,7 @@
           <button class="modal-close" id="close-submit-claim-btn">&times;</button>
         </div>
         <div class="modal-body">
-          <p class="form-instruction">Provide the URL of the article and describe the specific claim that needs verification. Staking GRAM tokens raises claims in the verifiers priority queue.</p>
+          <p class="form-instruction">Provide the URL of the article and describe the specific claim that needs verification. Staking TON tokens raises claims in the verifiers priority queue.</p>
           
           <div class="form-group">
             <label for="claim-url">Article URL:</label>
@@ -454,10 +454,10 @@
           </div>
 
           <div class="form-group mt-12">
-            <label for="claim-stake">Stake GRAM tokens to prioritize (Min 5):</label>
+            <label for="claim-stake">Stake TON tokens to prioritize (Min 5):</label>
             <div class="stake-input-wrapper">
               <input type="number" id="claim-stake" value="10" min="5">
-              <span>GRAM</span>
+              <span>TON</span>
             </div>
             <p class="help-text">You will earn your stake back plus validation fees if the claim is verified as true/false based on consensus. If your claim submission is malicious, your stake may be slashed.</p>
           </div>
@@ -514,10 +514,10 @@
           </div>
 
           <div class="form-group mt-12">
-            <label for="vote-stake">Reputation Stake (Min 10 GRAM):</label>
+            <label for="vote-stake">Reputation Stake (Min 10 TON):</label>
             <div class="stake-input-wrapper">
               <input type="number" id="vote-stake" value="10" min="10">
-              <span>GRAM</span>
+              <span>TON</span>
             </div>
             <p class="help-text">Your stake secures your vote. Honest consensus voters receive proportional distribution from the reward pool. Incorrect voters lose their staked reputation.</p>
           </div>
