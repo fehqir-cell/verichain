@@ -335,7 +335,7 @@ function saveAppState() {
 async function fetchRealOnChainBalances(rawAddress, chainId) {
   try {
     // ChainId -239 is Mainnet, -3 is Testnet
-    const isTestnet = chainId === -3;
+    const isTestnet = String(chainId) === "-3";
     const baseApi = isTestnet ? 'https://testnet.tonapi.io' : 'https://tonapi.io';
     
     // 1. Fetch native TON balance
@@ -587,7 +587,7 @@ function populatePremiumContent(article) {
   
   article.loadedWords.forEach(lw => {
     const span = document.createElement("span");
-    span.className = `load-word-badge ${lw.type === 'positive' ? 'positive' : ''}`;
+    span.className = `load-word-badge ${lw.type === 'positive' ? 'positive' : (lw.type === 'negative' ? 'negative' : 'neutral')}`;
     span.textContent = `"${lw.word}" (${lw.type})`;
     list.appendChild(span);
   });

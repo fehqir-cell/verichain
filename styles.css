@@ -1358,6 +1358,12 @@ body {
   font-size: 9px;
   padding: 2px 6px;
   border-radius: 4px;
+  background: rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: var(--text-secondary);
+}
+
+.load-word-badge.negative {
   background: rgba(255, 51, 102, 0.1);
   border: 1px solid rgba(255, 51, 102, 0.2);
   color: var(--accent-red);
