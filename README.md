@@ -23,9 +23,8 @@
 
 ### 4. Decentralized Wallet & Staking Hub
 - **TON Connect Simulation**: Link your Telegram Wallet in a click to enable transactions.
-- **DeFi Swap**: Exchange assets in real-time (`TON`, `USDT`, and `VERI`) to cover staking limits or claim validation returns.
 - **Transaction Ledger**: Track all deposits, withdrawals, content unlocks, tips, and staking updates on an immutable ledger.
-
+- still in development **DeFi Swap**: Exchange assets in real-time (`TON`, `USDT`, and `VERI`) to cover staking limits or claim validation returns.
 ---
 
 ## 🛠️ Tech Stack
