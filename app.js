@@ -588,7 +588,7 @@ function populatePremiumContent(article) {
   article.loadedWords.forEach(lw => {
     const span = document.createElement("span");
     span.className = `load-word-badge ${lw.type === 'positive' ? 'positive' : (lw.type === 'negative' ? 'negative' : 'neutral')}`;
-    span.textContent = `"${lw.word}" (${lw.type})`;
+    span.textContent = lw.word;
     list.appendChild(span);
   });
 }
@@ -1092,8 +1092,8 @@ function triggerUrlAnalysis() {
     
     const domainName = new URL(cleanUrl).hostname.replace("www.", "");
     
-    // Create new article entry
-    const newId = state.articles.length + 1;
+    // Create new article entry with unique ID to prevent localStorage collision
+    const newId = Date.now();
     const safeBiasClass = data.biasClass || "center";
     const newArticle = {
       id: newId,
